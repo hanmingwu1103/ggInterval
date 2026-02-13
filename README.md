@@ -57,19 +57,67 @@ library(ggInterval)
 
 # Convert classical data to symbolic interval data
 myIris <- classic2sym(iris, groupby = "Species")$intervalData
+```
 
-# Scatter plot
-ggInterval_scatterplot(myIris, aes(Petal.Length, Petal.Width))
+### Min-Max Plot
 
-# Min-max plot
+```r
 ggInterval_MMplot(myIris, aes(Sepal.Length))
+```
 
-# Index plot
+<p align="center">
+  <img src="man/figures/README-MMplot.png" width="80%">
+</p>
+
+### Center-Range Plot
+
+```r
+ggInterval_CRplot(myIris, aes(Sepal.Length))
+```
+
+<p align="center">
+  <img src="man/figures/README-CRplot.png" width="80%">
+</p>
+
+### Index Plot
+
+```r
 ggInterval_indexplot(myIris, aes(x = Sepal.Width))
+```
 
-# Radar plot
+<p align="center">
+  <img src="man/figures/README-indexplot.png" width="80%">
+</p>
+
+### Boxplot
+
+```r
+ggInterval_boxplot(myIris, aes(x = Sepal.Length))
+```
+
+<p align="center">
+  <img src="man/figures/README-boxplot.png" width="80%">
+</p>
+
+### Histogram
+
+```r
+ggInterval_hist(myIris, aes(x = Petal.Length))
+```
+
+<p align="center">
+  <img src="man/figures/README-hist.png" width="80%">
+</p>
+
+### Radar Plot
+
+```r
 ggInterval_radarplot(myIris, plotPartial = 1:3, showLegend = TRUE)
 ```
+
+<p align="center">
+  <img src="man/figures/README-radarplot.png" width="80%">
+</p>
 
 ## Links
 
