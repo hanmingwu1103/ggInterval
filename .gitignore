@@ -1,0 +1,6 @@
+/doc/
+/Meta/
+.RData
+.Rhistory
+.Rproj.user/
+.claude/
