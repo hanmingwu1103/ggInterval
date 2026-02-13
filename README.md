@@ -59,6 +59,16 @@ library(ggInterval)
 myIris <- classic2sym(iris, groupby = "Species")$intervalData
 ```
 
+### Scatter Plot
+
+```r
+ggInterval_scatterplot(myIris, aes(x = Petal.Length, y = Petal.Width))
+```
+
+<p align="center">
+  <img src="man/figures/README-scatterplot.png" width="80%">
+</p>
+
 ### Min-Max Plot
 
 ```r
@@ -87,6 +97,16 @@ ggInterval_indexplot(myIris, aes(x = Sepal.Width))
 
 <p align="center">
   <img src="man/figures/README-indexplot.png" width="80%">
+</p>
+
+### Index Image
+
+```r
+ggInterval_indexImage(myIris, aes(x = Sepal.Length))
+```
+
+<p align="center">
+  <img src="man/figures/README-indexImage.png" width="80%">
 </p>
 
 ### Boxplot
