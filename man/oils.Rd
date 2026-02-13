@@ -15,7 +15,9 @@ oils interval data example.
 }
 \examples{
 data(oils)
+\dontrun{
 ggInterval_scatterplot(oils, aes(x = GRA, y = IOD))
+}
 }
 \references{
 Billard L. and  Diday E. (2006).Symbolic data analysis:

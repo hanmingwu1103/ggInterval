@@ -1,14 +1,14 @@
 Package: ggInterval
 Type: Package
-Title: Visualizing Interval-valued Data using 'ggplot2'
+Title: Visualizing Interval-Valued Data using 'ggplot2'
 Version: 0.2.2
-Date: 2025-06-30
+Date: 2026-02-13
 Authors@R: c(
     person("Bo-Syue", "Jiang", email = "lukajiang1998@gmail.com", role = "aut"),
     person("Han-Ming", "Wu", email = "wuhm@g.nccu.edu.tw", role = "cre"))
 Author: Bo-Syue Jiang [aut], Han-Ming Wu [cre]
 Maintainer: Han-Ming Wu <wuhm@g.nccu.edu.tw>
-Description: (Formerly 'ggESDA') Implements an extension of 'ggplot2' and visualizes symbolic interval-valued data with various plots, offering more general and flexible input arguments. Additionally, it provides a function to transform classical data into symbolic data using both clustering algorithms and customized methods. 
+Description: Implements an extension of 'ggplot2' (formerly 'ggESDA') and visualizes symbolic interval-valued data with various plots, offering more general and flexible input arguments. Additionally, it provides a function to transform classical data into symbolic data using both clustering algorithms and customized methods.
 Depends: ggplot2, R (>= 4.4.0), tidyverse, RSDA
 Suggests: testthat (>= 2.1.0), knitr, rmarkdown
 Imports: rlang, R6, dplyr, tidyr, gridExtra, gtools, stringr, prodlim,

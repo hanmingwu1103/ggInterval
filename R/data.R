@@ -89,7 +89,9 @@
 #' Conceptual statistics and data mining. Wiley, Chichester.
 #' @examples
 #' data(oils)
+#' \dontrun{
 #' ggInterval_scatterplot(oils, aes(x = GRA, y = IOD))
+#' }
 #' @keywords datasets
 "oils"
 
@@ -101,7 +103,9 @@
 #' Conceptual statistics and data mining. Wiley, Chichester.
 #' @examples
 #' data(mushroom)
+#' \dontrun{
 #' ggInterval_scatterplot(mushroom, aes(x = Cap.Widths, y = Stipe.Lengths))
+#' }
 #' @keywords datasets
 "mushroom"
 

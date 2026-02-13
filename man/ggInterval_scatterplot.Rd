@@ -27,6 +27,7 @@ by rectangle and each of its width and heigth represents a
 interval of the data.
 }
 \examples{
+\dontrun{
 a<-rnorm(1000,0,5)
 b<-runif(1000,-20,-10)
 d<-as.data.frame(cbind(norm=a,unif=b))
@@ -51,4 +52,5 @@ p<-ggInterval_scatterplot(mydata[1:10,],aes(AD,BC,alpha=0.2))
 p+scale_fill_manual(labels=rownames(mydata)[1:10],
                    values=rainbow(10),
                    name="Group")
+}
 }
