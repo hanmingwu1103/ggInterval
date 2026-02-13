@@ -112,11 +112,9 @@ ggInterval_scatterplot <- function(data = NULL,
     d <- addFactor(rawData = data, iData = d)
     
     
-    fcLocation <- c(which(names(mapping) == "fill"), which(names(mapping) == "col"))
+    fcLocation <- c(which(names(usermapping) == "fill"), which(names(usermapping) == "col"))
     if (length(fcLocation) != 0) {
-      usermapping <- mapping[-fcLocation] #Aesthetic without fill, col
-    } else{
-      usermapping <- mapping
+      usermapping <- usermapping[-fcLocation] #Aesthetic without fill, col
     }
     # if(is.null(args$fill)){
     #   args$fill <- grDevices::gray.colors(n)
