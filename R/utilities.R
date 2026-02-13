@@ -62,6 +62,7 @@ cor.symbolic_interval <- function(x,
                                   y,
                                   method = c("centers", "B", "BD", "BG"),
                                   ...) {
+  method <- match.arg(method)
   if (method == "centers") {
     out <- stats::cor((min(x) + max(x)) / 2, (min(y) + max(y)) / 2)
   } else{
