@@ -1,18 +1,18 @@
 ---
 title: "Introduction to ggInterval"
-subtitle: "ggInterval: an R package for visualizing interval-valued data using ggplot2" 
-author: "Bo-Syue Jiang and Han-Ming Wu*"
-date: "June 30, 2025"
-output: 
+subtitle: "Visualizing Interval-Valued Data using ggplot2"
+author: "Bo-Syue Jiang and Han-Ming Wu"
+date: "`r Sys.Date()`"
+output:
   rmarkdown::html_document:
     toc: true
     toc_depth: 3
-    number_sections: true  
+    number_sections: true
 vignette: >
-  %\VignetteIndexEntry{Introduction to dataSDA}
+  %\VignetteIndexEntry{Introduction to ggInterval}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -28,23 +28,389 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(warning = FALSE)
 knitr::opts_chunk$set(message = FALSE)
 knitr::opts_chunk$set(out.width = "100%")
-knitr::opts_chunk$set(fig.align = 'center')
+knitr::opts_chunk$set(fig.align = "center")
 library(knitr)
 library(ggInterval)
 library(RSDA)
 ```
 
-$$\\[0.1in]$$ Exploratory data analysis (EDA) remains indispensable for revealing a dataset's salient features prior to formal modeling. Classic EDA relies on graphical summaries such as boxplots, histograms, and scatterplots, supplemented by dimension-reduction tools and interactive displays. Yet modern data are increasingly high-volume and structurally rich: single observations may be recorded not as scalars but as intervals, histograms, or full empirical distributions, collectively known as symbolic data. Conventional graphics cannot natively accommodate these objects, creating a gap between contemporary data structures and available visualization tools. To bridge this gap, we introduce <b>ggInterval</b> (formerly <b>ggESDA</b>*), an <b>R</b> package for visualizing interval-valued symbolic data. The package delivers seamless integration with the <b>ggplot2</b> workflow. We detail the package design, explain its extensibility, and illustrate its practical value through two real-world symbolic datasets. The results demonstrate that <b>ggInterval</b> enables analysts to uncover structure and anomalies in interval-valued data that would remain hidden with traditional scalar-oriented graphics, thereby enhancing the EDA toolkit for modern applied statistics and data science. The <b>ggInterval</b> package is currently available on the Comprehensive R Archive Network (CRAN) at <https://CRAN.R-project.org/package=ggInterval> and <https://hmwu.idv.tw/ggInterval/>.
+# Introduction
 
-* **Current version** (build on June 30, 2025): [ggInterval_0.2.2.zip](https://hmwu.idv.tw/ggInterval/ggInterval_0.2.2.zip)
+Exploratory data analysis (EDA) relies on graphical summaries---boxplots,
+histograms, scatter plots---to reveal a dataset's salient features before
+formal modeling. Yet modern data are increasingly recorded not as single
+scalar values but as *intervals*, *histograms*, or full empirical
+distributions. These richer objects are collectively known as **symbolic
+data** (Billard and Diday, 2006). For example, when individual-level
+measurements are aggregated by group, each variable naturally becomes an
+interval $[a, b]$ rather than a point value.
 
-* **Citation**: Jiang, B.S. and Wu, H.M.\* (2025), ggInterval: an R package for visualizing interval-valued data using ggplot2. R package version 0.2.2, https://CRAN.R-project.org/package=ggInterval. 
+Conventional R graphics cannot natively accommodate interval-valued
+observations. **ggInterval** (formerly **ggESDA**) bridges this gap by
+extending the **ggplot2** framework to visualize interval-valued symbolic
+data. The package provides a family of plot functions with a uniform
+interface:
 
-* **Vignettes**: [ggInterval_Jiang&Wu.pdf](https://hmwu.idv.tw/ggInterval/ggInterval_Jiang&Wu.pdf)
+```r
+ggInterval_<GRAPH_TYPE>(data, mapping = aes(...), ...)
+```
 
-<font size = "0.5"><em> * The package is renamed to better reflect the focus of our work on interval-valued data visualization. </em></font>
+where `data` is a symbolic data object and `mapping` uses the standard
+`ggplot2::aes()` syntax. Because most plot functions return `ggplot2`
+objects, users can freely add themes, scales, labels, and additional layers.
 
+# Data Preparation
 
-$$\\[0.1in]$$ 
- 
+## Built-in datasets
 
+The package ships with several symbolic datasets. The most commonly used
+are:
+
+- **`facedata`** -- 24 faces (8 ethnic groups $\times$ 3 replicates) with 6
+  interval-valued facial measurements (AD, BC, AH, GH, EH, BG).
+- **`Environment`** -- 14 cities described by 17 variables, including both
+  interval-valued and modal multi-valued variables.
+- **`oils`** -- 8 types of oils with 4 interval-valued chemical properties.
+
+```{r data-facedata}
+data(facedata)
+facedata
+```
+
+```{r data-summary}
+summary(facedata)
+```
+
+## Converting classical data with `classic2sym`
+
+Classical (scalar) data can be converted to symbolic interval data by
+aggregating within groups. The `classic2sym()` function supports several
+grouping strategies:
+
+```{r classic2sym-species}
+myIris <- classic2sym(iris, groupby = "Species")
+myIris$intervalData
+```
+
+The `groupby` argument accepts:
+
+- A column name (factor variable) in the data, e.g. `"Species"`.
+- `"kmeans"` or `"hclust"` for unsupervised clustering (with `k` groups).
+- `"customize"` for user-supplied minimum and maximum data frames.
+
+```{r classic2sym-kmeans}
+myIris_km <- classic2sym(iris, groupby = "kmeans", k = 5)
+myIris_km$intervalData
+```
+
+## Converting RSDA objects with `RSDA2sym`
+
+If you already have an RSDA `symbolic_tbl` object, wrap it with `RSDA2sym()`
+so it can be used with all ggInterval plot functions:
+
+```{r rsda2sym, eval = FALSE}
+mySym <- RSDA2sym(Cardiological)
+mySym$intervalData
+```
+
+# Descriptive Statistics
+
+ggInterval provides S3 methods for common statistical summaries on symbolic
+interval data.
+
+## Summary statistics
+
+`summary()` reports the minimum, quartiles, median, mean, maximum, and
+standard deviation for each interval-valued variable:
+
+```{r stat-summary}
+summary(facedata)
+```
+
+## Correlation and covariance
+
+`cor()` and `cov()` compute association matrices. Several methods are
+available for interval data, including `"centers"`, `"B"` (Billard),
+`"BD"` (Billard--Diday), and `"BG"` (Billard--Greco):
+
+```{r stat-cor}
+cor(facedata)
+```
+
+```{r stat-cov}
+cov(facedata)
+```
+
+## Standardization
+
+`scale()` standardizes symbolic interval data (centering and scaling),
+which can be useful before multivariate analyses:
+
+```{r stat-scale}
+facedata_scaled <- scale(facedata)
+facedata_scaled
+```
+
+# Univariate Plots
+
+## Index plot
+
+`ggInterval_indexplot()` displays the interval range of each observation as
+a vertical bar. This is useful for spotting outliers and comparing spreads
+across observations.
+
+```{r indexplot, fig.width = 7, fig.height = 4}
+ggInterval_indexplot(facedata, aes(x = AD))
+```
+
+## Index image
+
+`ggInterval_indexImage()` replaces the margin bars of the index plot with a
+color-coded strip. The `column_condition` parameter controls whether colors
+represent column-wise or matrix-wise conditions, and `full_strip` expands
+the color strip to the full figure width.
+
+```{r indeximage-col, fig.width = 7, fig.height = 4}
+ggInterval_indexImage(facedata, aes(AD),
+                      column_condition = TRUE, full_strip = FALSE)
+```
+
+```{r indeximage-full, fig.width = 7, fig.height = 4}
+ggInterval_indexImage(facedata, aes(AD),
+                      column_condition = TRUE, full_strip = TRUE) +
+  coord_flip()
+```
+
+## Boxplot
+
+`ggInterval_boxplot()` draws an interval-valued box plot, where each
+observation's interval is represented by nested rectangles showing the
+distribution of the interval endpoints. Use `plotAll = TRUE` to display all
+variables side by side.
+
+```{r boxplot-single, fig.width = 7, fig.height = 4}
+ggInterval_boxplot(facedata, aes(AD))
+```
+
+```{r boxplot-all, fig.width = 7, fig.height = 5}
+ggInterval_boxplot(facedata, plotAll = TRUE)
+```
+
+## Histogram
+
+`ggInterval_hist()` constructs a histogram from interval-valued data. Two
+binning strategies are supported:
+
+- `method = "equal-bin"` (default): bins of equal width.
+- `method = "unequal-bin"`: bin boundaries depend on the data distribution.
+
+Note that `ggInterval_hist()` returns a list; use `$plot` to extract the
+`ggplot2` object.
+
+```{r hist-equal, fig.width = 7, fig.height = 4}
+ggInterval_hist(facedata, aes(x = AD), bins = 10,
+                method = "equal-bin")$plot
+```
+
+```{r hist-unequal, fig.width = 7, fig.height = 4}
+ggInterval_hist(facedata, aes(x = AD),
+                method = "unequal-bin")$plot
+```
+
+## Min-max plot
+
+`ggInterval_MMplot()` marks the minimum and maximum endpoints of each
+observation's interval, connected by a line segment. This makes it easy to
+compare ranges across observations.
+
+```{r mmplot, fig.width = 7, fig.height = 4}
+ggInterval_MMplot(facedata, aes(AD))
+```
+
+Use `plotAll = TRUE` to display all variables together:
+
+```{r mmplot-all, fig.width = 7, fig.height = 5}
+ggInterval_MMplot(facedata, plotAll = TRUE)
+```
+
+## Center-range plot
+
+`ggInterval_CRplot()` plots each observation as a point in a two-dimensional
+space where the x-axis is the center (midpoint) of the interval and the
+y-axis is the range (spread).
+
+```{r crplot, fig.width = 7, fig.height = 4}
+ggInterval_CRplot(facedata, aes(AD))
+```
+
+```{r crplot-all, fig.width = 7, fig.height = 5}
+ggInterval_CRplot(facedata, plotAll = TRUE)
+```
+
+# Bivariate Plots
+
+## Scatter plot
+
+`ggInterval_scatterplot()` visualizes two interval-valued variables
+simultaneously. Each observation is drawn as a rectangle whose width and
+height represent the intervals on the x- and y-axes, respectively.
+
+```{r scatterplot, fig.width = 7, fig.height = 5}
+ggInterval_scatterplot(facedata, aes(x = AD, y = BC))
+```
+
+## 2D histogram
+
+`ggInterval_2Dhist()` partitions the bivariate domain into a grid and counts
+how many interval observations overlap each cell. The `xBins` and `yBins`
+parameters control the grid resolution.
+
+```{r hist2d, fig.width = 7, fig.height = 5}
+ggInterval_2Dhist(facedata, aes(x = AD, y = BC), xBins = 10, yBins = 10)
+```
+
+Here is the same plot for the `oils` dataset:
+
+```{r hist2d-oils, fig.width = 7, fig.height = 5}
+data(oils)
+ggInterval_2Dhist(oils, aes(x = GRA, y = FRE), xBins = 5, yBins = 5)
+```
+
+# Multivariate Plots
+
+## Scatter plot matrix
+
+`ggInterval_scatterMatrix()` produces a pairwise scatter plot matrix for all
+continuous interval variables in the dataset. Note that this function returns
+a `marrangeGrob` object (from **gridExtra**), not a `ggplot2` object.
+
+```{r scattermatrix, fig.width = 8, fig.height = 8}
+ggInterval_scatterMatrix(facedata[, 1:3])
+```
+
+## 2D histogram matrix
+
+`ggInterval_2DhistMatrix()` is the matrix analogue of `ggInterval_2Dhist()`,
+showing 2D histograms for all variable pairs.
+
+```{r histmatrix, fig.width = 8, fig.height = 8}
+ggInterval_2DhistMatrix(oils, xBins = 5, yBins = 5)
+```
+
+## Index image heatmap
+
+When `plotAll = TRUE`, `ggInterval_indexImage()` produces a heatmap-style
+visualization across all variables, providing an overview of the entire
+dataset.
+
+```{r indeximage-heatmap, fig.width = 8, fig.height = 5}
+ggInterval_indexImage(facedata, plotAll = TRUE)
+```
+
+## Radar plot
+
+`ggInterval_radarplot()` displays multiple interval-valued variables on
+radial axes. Each observation is represented by a polygon (or rectangle)
+whose extent along each axis shows the interval range. The `plotPartial`
+argument selects which observations to display.
+
+```{r radar-polygon, fig.width = 7, fig.height = 6}
+data(Environment)
+ggInterval_radarplot(Environment[, 5:17],
+                     plotPartial = 2,
+                     showLegend = FALSE,
+                     base_circle = TRUE,
+                     base_lty = 2,
+                     addText = FALSE) +
+  labs(title = "Environment: radar plot (default)")
+```
+
+The `type = "rect"` variant draws rectangles instead of polygons:
+
+```{r radar-rect, fig.width = 7, fig.height = 6}
+ggInterval_radarplot(Environment[, 5:17],
+                     plotPartial = 2,
+                     type = "rect",
+                     showLegend = FALSE,
+                     base_circle = TRUE,
+                     addText = FALSE) +
+  labs(title = "Environment: radar plot (rect)")
+```
+
+## 3D scatter plot
+
+`ggInterval_3Dscatterplot()` visualizes three interval-valued variables,
+rendering each observation as a cube-like shape projected into two
+dimensions.
+
+```{r scatter3d, fig.width = 7, fig.height = 6}
+ggInterval_3Dscatterplot(facedata[1:5, ], aes(x = BC, y = EH, z = GH))
+```
+
+# Principal Component Analysis
+
+`ggInterval_PCA()` performs vertices-based PCA on interval-valued data. Each
+interval observation is expanded to its vertices (all $2^p$ corner
+combinations), PCA is applied, and the results are projected back to
+interval form.
+
+```{r pca, fig.width = 7, fig.height = 5}
+pca_result <- ggInterval_PCA(facedata, plot = FALSE)
+pca_result$ggplotPCA
+```
+
+Setting `poly = TRUE` adds a convex-hull polygon connecting the projected
+vertices for each observation:
+
+```{r pca-poly, fig.width = 7, fig.height = 5}
+pca_poly <- ggInterval_PCA(facedata, poly = TRUE, plot = FALSE)
+pca_poly$ggplotPCA
+```
+
+PCA also works with classical data via automatic conversion:
+
+```{r pca-iris, fig.width = 7, fig.height = 5}
+myIris <- classic2sym(iris, groupby = "Species")
+pca_iris <- ggInterval_PCA(myIris, plot = FALSE)
+pca_iris$ggplotPCA
+```
+
+# Working with ggplot2
+
+Because most ggInterval functions return standard `ggplot2` objects, you can
+customize plots with the full range of ggplot2 features.
+
+**Themes and labels:**
+
+```{r ggplot2-theme, fig.width = 7, fig.height = 4}
+ggInterval_indexplot(facedata, aes(x = AD)) +
+  theme_minimal() +
+  labs(title = "Index plot of AD", x = "Observation", y = "AD")
+```
+
+**Custom color scales:**
+
+```{r ggplot2-scale, fig.width = 7, fig.height = 4}
+p <- ggInterval_hist(facedata, aes(x = AD), bins = 10,
+                     method = "equal-bin")$plot
+p + scale_fill_manual(values = rainbow(10))
+```
+
+**Adding reference lines:**
+
+```{r ggplot2-ref, fig.width = 7, fig.height = 4}
+ggInterval_CRplot(facedata, aes(AD)) +
+  geom_hline(yintercept = 5, linetype = "dashed", color = "red")
+```
+
+Note that `ggInterval_scatterMatrix()` returns a `marrangeGrob` object, so
+ggplot2 `+` operators cannot be applied to it directly.
+
+# References
+
+- Billard, L. and Diday, E. (2006). *Symbolic Data Analysis: Conceptual
+  Statistics and Data Mining*. Wiley, Chichester.
+
+- Jiang, B.S. and Wu, H.M. (2025). ggInterval: an R package for visualizing
+  interval-valued data using ggplot2. *R package version 0.2.2*,
+  <https://CRAN.R-project.org/package=ggInterval>.
