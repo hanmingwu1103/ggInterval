@@ -15,7 +15,9 @@ mushroom interval data example.
 }
 \examples{
 data(mushroom)
+\dontrun{
 ggInterval_scatterplot(mushroom, aes(x = Cap.Widths, y = Stipe.Lengths))
+}
 }
 \references{
 Billard L. and  Diday E. (2006).Symbolic data analysis:

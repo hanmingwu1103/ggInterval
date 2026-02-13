@@ -16,6 +16,7 @@
 #' @return Return a ggplot2 object.
 #' @usage ggInterval_scatterplot(data = NULL,mapping = aes(NULL), ...)
 #' @examples
+#' \dontrun{
 #' a<-rnorm(1000,0,5)
 #' b<-runif(1000,-20,-10)
 #' d<-as.data.frame(cbind(norm=a,unif=b))
@@ -40,6 +41,7 @@
 #' p+scale_fill_manual(labels=rownames(mydata)[1:10],
 #'                    values=rainbow(10),
 #'                    name="Group")
+#' }
 #' @export
 ggInterval_scatterplot <- function(data = NULL,
                                mapping = aes(NULL),

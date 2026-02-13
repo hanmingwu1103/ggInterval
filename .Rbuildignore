@@ -2,3 +2,6 @@
 ^\.Rproj\.user$
 ^doc$
 ^Meta$
+^\.claude$
+^bak$
+^README\.md$
