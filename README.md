@@ -142,8 +142,7 @@ ggInterval_radarplot(myIris, plotPartial = 1:3, showLegend = TRUE)
 ## Links
 
 - **CRAN**: <https://CRAN.R-project.org/package=ggInterval>
-- **Homepage**: <https://hmwu.idv.tw/ggInterval/>
-- **Vignette**: [ggInterval_Jiang&Wu.pdf](https://hmwu.idv.tw/ggInterval/ggInterval_Jiang&Wu.pdf)
+- **Vignette**: [ggInterval_intro.html](https://CRAN.R-project.org/package=ggInterval/vignettes/ggInterval_Intro.html)
 
 ## Citation
 
