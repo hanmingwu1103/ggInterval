@@ -146,7 +146,7 @@ ggInterval_radarplot(myIris, plotPartial = 1:3, showLegend = TRUE)
 
 ## Citation
 
-Jiang, B.S. and Wu, H.M. (2025), ggInterval: an R package for visualizing interval-valued data using ggplot2. R package version 0.2.2, https://CRAN.R-project.org/package=ggInterval.
+Jiang, B.S. and Wu, H.M. (2025), ggInterval: an R package for visualizing interval-valued data using ggplot2. R package version 0.2.3, https://CRAN.R-project.org/package=ggInterval.
 
 ## License
 

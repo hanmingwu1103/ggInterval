@@ -412,5 +412,5 @@ ggplot2 `+` operators cannot be applied to it directly.
   Statistics and Data Mining*. Wiley, Chichester.
 
 - Jiang, B.S. and Wu, H.M. (2025). ggInterval: an R package for visualizing
-  interval-valued data using ggplot2. *R package version 0.2.2*,
+  interval-valued data using ggplot2. *R package version 0.2.3*,
   <https://CRAN.R-project.org/package=ggInterval>.
