@@ -1,7 +1,7 @@
 Package: ggInterval
 Type: Package
 Title: Visualizing Interval-Valued Data using 'ggplot2'
-Version: 0.2.2
+Version: 0.2.3
 Date: 2026-02-13
 Authors@R: c(
     person("Bo-Syue", "Jiang", email = "lukajiang1998@gmail.com", role = "aut"),
