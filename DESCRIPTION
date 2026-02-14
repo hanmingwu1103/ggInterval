@@ -18,8 +18,10 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
-URL: https://CRAN.R-project.org/package=ggInterval
+URL: https://github.com/hanmingwu1103/ggInterval,
+    https://CRAN.R-project.org/package=ggInterval
+BugReports: https://github.com/hanmingwu1103/ggInterval/issues
 NeedsCompilation: no
-Packaged: 2025-06-30 02:13:27 UTC; user
+Packaged: 2026-01-30 02:13:27 UTC; user
 Repository: CRAN
-Date/Publication: 2025-06-30 08:40:10 UTC
+Date/Publication: 2026-01-30 08:40:10 UTC
