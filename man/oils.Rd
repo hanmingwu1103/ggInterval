@@ -15,7 +15,7 @@ oils interval data example.
 }
 \examples{
 data(oils)
-\dontrun{
+\donttest{
 ggInterval_scatterplot(oils, aes(x = GRA, y = IOD))
 }
 }

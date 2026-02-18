@@ -35,9 +35,10 @@
 #' Billard L. and  Diday E. (2006).
 #' Symbolic data analysis: Conceptual statistics and data mining. Wiley, Chichester.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(facedata)
 #' ggInterval_hist(facedata, aes(x = AD))
+#' }
 #' @keywords datasets
 #' @source \url{https://CRAN.R-project.org/package=RSDA}
 "facedata"
@@ -89,7 +90,7 @@
 #' Conceptual statistics and data mining. Wiley, Chichester.
 #' @examples
 #' data(oils)
-#' \dontrun{
+#' \donttest{
 #' ggInterval_scatterplot(oils, aes(x = GRA, y = IOD))
 #' }
 #' @keywords datasets
@@ -103,7 +104,7 @@
 #' Conceptual statistics and data mining. Wiley, Chichester.
 #' @examples
 #' data(mushroom)
-#' \dontrun{
+#' \donttest{
 #' ggInterval_scatterplot(mushroom, aes(x = Cap.Widths, y = Stipe.Lengths))
 #' }
 #' @keywords datasets
