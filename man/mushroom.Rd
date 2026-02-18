@@ -15,7 +15,7 @@ mushroom interval data example.
 }
 \examples{
 data(mushroom)
-\dontrun{
+\donttest{
 ggInterval_scatterplot(mushroom, aes(x = Cap.Widths, y = Stipe.Lengths))
 }
 }

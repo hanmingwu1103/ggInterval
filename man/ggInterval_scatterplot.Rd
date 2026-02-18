@@ -27,7 +27,7 @@ by rectangle and each of its width and heigth represents a
 interval of the data.
 }
 \examples{
-\dontrun{
+\donttest{
 a<-rnorm(1000,0,5)
 b<-runif(1000,-20,-10)
 d<-as.data.frame(cbind(norm=a,unif=b))
