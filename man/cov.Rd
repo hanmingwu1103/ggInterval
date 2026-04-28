@@ -69,8 +69,5 @@ Rodriguez-Rojas, Oldemar (2000). \emph{Classification et modeles lineaires
 en analyse des donnees symboliques}. PhD thesis, Universite Paris IX
 Dauphine.
 }
-\author{
-Oldemar Rodriguez Rojas
-}
 \keyword{Covariance}
 \keyword{Symbolic}

@@ -61,13 +61,10 @@ Subjects
 # Basic Usage
 
 ```{r ggplot2_workflow}
-ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
-  geom_point() +
-  scale_color_manual(values = c("red", "blue", "goldenrod"))
-
 ggInterval_scatterplot(
   facedata,
   aes(x = AD, y = BC, fill = Subjects),
+  showLabels = FALSE,
   col = "black"
 ) +
   scale_fill_brewer(palette = "Set1") +
@@ -148,11 +145,24 @@ labels repeated inside each variable panel.
 ## Boxplots and Histograms
 
 ```{r boxplots_histograms}
-ggInterval_boxplot(facedata, aes(x = AD), width_type = "violin-like")
+ggInterval_boxplot(facedata, plotAll = TRUE, width_type = "violin-like") +
+  theme(legend.position = "bottom", axis.text.x = element_blank())
+
+ggInterval_boxplot(facedata, plotAll = TRUE, width_type = "side-by-side") +
+  theme(legend.position = "bottom", axis.text.x = element_blank())
 
 ggInterval_boxplot(facedata, aes(x = AD), width_type = "quantile-depth")
 
-ggInterval_boxplot(facedata, aes(x = AD), width_type = "side-by-side")
+hist.obj.equal <- ggInterval_hist(facedata, plotAll = TRUE, bins = 10)
+print(hist.obj.equal)
+hist.obj.equal$`Table AD`
+
+hist.obj.unequal <- ggInterval_hist(
+  facedata,
+  plotAll = TRUE,
+  method = "unequal-bin"
+)
+print(hist.obj.unequal)
 
 ggInterval_hist(facedata, aes(x = AD), method = "equal-bin", bins = 10)
 
@@ -190,7 +200,8 @@ ggInterval_lineplot(stock.data.LH, aes(y = V1, x = Day), barWidth = 0.6) +
   coord_cartesian(xlim = c(1, 31), expand = FALSE) +
   facet_wrap(~Month, ncol = 1, scales = "free_y") +
   scale_x_continuous(breaks = c(1, 8, 15, 22, 29)) +
-  labs(x = "Day of month", y = "Price") +
+  labs(title = "Interval-valued Line Plot",
+       x = "Day of month", y = "Price") +
   ggthemes::theme_economist() +
   theme(strip.text = element_text(face = "bold"))
 ```
@@ -212,10 +223,14 @@ gridExtra::marrangeGrob(mm.plot.list, nrow = 2, ncol = 3, top = "")
 ## Center-Range Plot
 
 ```{r centerrange_plot}
-ggInterval_CRplot(facedata, aes(size = 1.5), plotAll = TRUE)
+cr_aspect_ratio <- 5
+
+ggInterval_CRplot(facedata, aes(size = 1.5), plotAll = TRUE) +
+  coord_fixed(ratio = cr_aspect_ratio)
 
 facedata.scale <- scale(facedata)$intervalData
-ggInterval_CRplot(facedata.scale, aes(size = 1.5), plotAll = TRUE)
+ggInterval_CRplot(facedata.scale, aes(size = 1.5), plotAll = TRUE) +
+  coord_fixed(ratio = cr_aspect_ratio)
 ```
 
 # Bivariate Plots
@@ -279,6 +294,8 @@ face.2dh.unequal +
 ## Scatter Matrix
 
 ```{r scatter_matrix}
+ggInterval_scatterMatrix(facedata)
+
 ggInterval_scatterMatrix(facedata, aes(fill = "steelblue", alpha = 0.3))
 ```
 
@@ -292,9 +309,10 @@ ggInterval_2DhistMatrix(
   xBins = 10,
   yBins = 10,
   display = "p",
+  removeZero = TRUE,
   palette = "Blues",
   direction = 1,
-  cell_labels = TRUE
+  cell_labels = FALSE
 )
 ```
 
@@ -306,8 +324,9 @@ ggInterval_2DhistMatrix(
   display = "p",
   palette = "Blues",
   direction = 1,
-  cell_labels = TRUE,
-  tau = 0.5
+  tau = 0.5,
+  removeZero = TRUE,
+  cell_labels = FALSE
 )
 ```
 
@@ -320,14 +339,39 @@ ggInterval_indexImage(
   full_strip = TRUE,
   column_condition = FALSE
 ) +
-  scale_colour_distiller(palette = "Blues", direction = 1)
+  scale_colour_distiller(palette = "Blues", direction = 1) +
+  labs(x = "Subjects") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+ggInterval_indexImage(
+  facedata,
+  plotAll = TRUE,
+  full_strip = TRUE
+) +
+  scale_colour_distiller(palette = "Spectral") +
+  labs(x = "Subjects")
+
+ggInterval_indexImage(
+  facedata,
+  plotAll = TRUE,
+  full_strip = FALSE,
+  column_condition = FALSE
+) +
+  scale_colour_distiller(palette = "Blues", direction = 1) +
+  labs(x = "Subjects") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
 ggInterval_indexImage(
   facedata,
   plotAll = TRUE,
   full_strip = FALSE
 ) +
-  scale_colour_distiller(palette = "Spectral")
+  scale_colour_distiller(palette = "Spectral") +
+  labs(x = "Subjects")
 ```
 
 ## Radar Plots
@@ -376,16 +420,43 @@ ggInterval_radarplot(
   scale_fill_brewer(palette = "Greys") +
   labs(title = "", fill = "Quantiles") +
   theme_hc()
+
+ggInterval_radarplot(
+  Environment,
+  base_circle = FALSE,
+  base_lty = 1,
+  type = "quantile",
+  quantileNum = 5,
+  showLegend = TRUE,
+  Drift = 0
+) +
+  scale_fill_brewer(palette = "Greys") +
+  labs(title = "", fill = "Quantiles") +
+  theme_hc()
 ```
 
 # Customization
 
 ```{r customization_examples}
-myIris <- classic2sym(iris, groupby = "Species")
+set.seed(1234567890)
+facedata.tmp <- facedata
+facedata.tmp$cluster <- RSDA::sym.kmeans(facedata.tmp, k = 3)$cluster
 
-ggInterval_indexplot(myIris$intervalData, aes(x = Sepal.Length, fill = "steelblue")) +
-  labs(title = "Customized Index Plot using K-Means Results", fill = "Species") +
-  theme_minimal()
+ggInterval_indexplot(facedata.tmp, aes(y = AD, fill = Subjects)) +
+  geom_text(
+    aes(x = seq_len(nrow(facedata.tmp)), y = .data$AD$min,
+        label = rownames(facedata.tmp)),
+    vjust = 1.5,
+    size = 2
+  ) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(title = "Customized Index Plot Using K-Means Clusters",
+       fill = "Subjects") +
+  facet_grid(cols = vars(cluster), scales = "free_x", space = "free_x") +
+  theme_economist_white() +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 ```
 
 # Working with Other SDA Packages
@@ -441,15 +512,28 @@ ggInterval_PCA(myAbalone$intervalData, plot = FALSE)$ggplotPCA
 # PCA and Correlation Heatmaps
 
 ```{r pca_example}
-ggInterval_PCA(
-  facedata,
-  concepts_group = Subjects,
-  showLabels = TRUE,
-  labelSize = 3,
-  checkOverlap = TRUE
-)$ggplotPCA +
+pca.results <- RSDA::sym.pca(facedata, method = "tops")
+rownames(pca.results$Sym.Components) <- rownames(facedata)
+
+ggInterval_scatterplot(
+  pca.results$Sym.Components,
+  aes(Dim.1, Dim.2, fill = as.factor(Subjects)),
+  labelSize = 2.6,
+  labelPosition = "topright",
+  labelNudgeX = -0.2,
+  labelNudgeY = 0.15,
+  checkOverlap = TRUE,
+  col = "black"
+) +
   scale_fill_brewer(palette = "Set1") +
-  coord_fixed(ratio = 1)
+  scale_x_continuous(expand = expansion(mult = c(0.08, 0.12))) +
+  scale_y_continuous(expand = expansion(mult = c(0.06, 0.10))) +
+  coord_fixed(ratio = 1) +
+  labs(x = "PCA-1", y = "PCA-2", fill = "Subjects")
+
+ggInterval_PCA(facedata, poly = TRUE, concepts_group = as.factor(Subjects)) +
+  coord_fixed(ratio = 1) +
+  labs(x = "PCA-1", y = "PCA-2")
 ```
 
 ```{r corrplot_example}

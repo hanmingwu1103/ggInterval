@@ -1,7 +1,6 @@
 #' Generic function for the correlation
 #' @name cor
 #' @aliases cor
-#' @author Oldemar Rodriguez Rojas
 #' @description This function compute the symbolic correlation
 #' @param x First symbolic variables.
 #' @param y Second symbolic variables.
@@ -95,7 +94,6 @@ cor.symbolic_interval <- function(x,
 #' Generic function for the covariance
 #' @name cov
 #' @aliases cov
-#' @author Oldemar Rodriguez Rojas
 #' @description This function compute the symbolic covariance.
 #' @param x First symbolic variables.
 #' @param y Second symbolic variables.
