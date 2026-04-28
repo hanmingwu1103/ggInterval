@@ -2,17 +2,16 @@
 #' @title Convert classical data frame into a symbolic data.
 #' @description  A function for converting a classical data, which may
 #' present as a data frame or a matrix with one entry one value, into
-#' a symbolic data,which is shown as a interval or a set in an entry.
+#' a symbolic data object, which is represented as an interval or a set in an entry.
 #' Object after converting is ggInterval class containing interval
 #' data and raw data(if it exist) and typically statistics.
 #' @import rlang stats vctrs
 #' @importFrom RSDA classic.to.sym
 #' @importFrom stringr str_split
-#' @ipmortForm tibble rownames_to_column
-#' @ipmortForm tibble column_to_rownames
-#' @ipmortForm prodlim row.match
+#' @importFrom tibble as_tibble rownames_to_column column_to_rownames
+#' @importFrom prodlim row.match
 #' @param data A classical data frame that you want to be converted into
-#' a interval data
+#' interval-valued data
 #' @param groupby A way to aggregate. It can be either a clustering method
 #' or a variable name which exist in input data (necessary factor type)
 #' . Default "kmeans".
@@ -31,7 +30,7 @@
 #' @usage classic2sym(data=NULL,groupby = "kmeans",k=5,minData=NULL,maxData=NULL,
 #' modalData = NULL)
 #' @return classic2sym returns an object of class "ggInterval",which
-#' have a interval data and others as follows.
+#' has interval-valued data and related outputs as follows.
 #' \itemize{
 #'   \item intervalData - The Interval data after converting also known
 #'   as a RSDA object.
@@ -109,7 +108,6 @@ classic2sym <- function(data = NULL,
   pkg.env$statisticsDF <- NULL
   pkg.env$result <- NULL
   pkg.env$intervalData <- NULL
-  pkg.env$rawData <- NULL
   data <- as.data.frame(data)
   
   if (groupby == "customize" & !is.null(modalData)) {
@@ -139,7 +137,9 @@ classic2sym <- function(data = NULL,
   numericData <- unlist(lapply(data.frame(data[1:dim(data)[2]]) , FUN = is.numeric))
   #start debug version0825-1
   for (i in c(1:dim(data)[2])[!numericData]) {
-    data[[i]] <- as.factor(data[[i]])
+    if (!inherits(data[[i]], c("Date", "POSIXct", "POSIXt"))) {
+      data[[i]] <- as.factor(data[[i]])
+    }
   }
   #end debug
   numericData <- data.frame(data[, which(numericData)])
@@ -148,6 +148,7 @@ classic2sym <- function(data = NULL,
     numericData <- na.omit(numericData)
     data <- na.omit(data)
   }
+  pkg.env$rawData <- data
   switch(
     toString(groupby),
     kmeans = {
@@ -222,9 +223,9 @@ classic2sym <- function(data = NULL,
       
       d <- RSDA::classic.to.sym(data, groupby)
       d <- buildRowName(data, d, groupby)
-      #d<-tibble::as.tibble(d)
-      
-      numericData <- unlist(lapply(data.frame(tibble::as.tibble(d)[, 1:dim(d)[2]]) , FUN = RSDA::is.sym.interval))
+      #d <- tibble::as_tibble(d)
+
+      numericData <- unlist(lapply(data.frame(tibble::as_tibble(d)[, 1:dim(d)[2]]) , FUN = RSDA::is.sym.interval))
       numericData <- d[, numericData]
       
       pkg.env$statisticsDF <- buildStatsDf(numericData = numericData)
@@ -409,7 +410,7 @@ customize <- function(nData = NULL,
     colnames(data) <- paste0("V", i)
     finalData <- cbind(finalData, data)
   }
-  finalData <- tibble::as.tibble(finalData)
+  finalData <- tibble::as_tibble(finalData)
   finalData <- finalData[, 2:(p + 1)]
   return(finalData)
 }

@@ -2,9 +2,12 @@
 % Please edit documentation in R/ggInterval_CRplot.R
 \name{ggInterval_CRplot}
 \alias{ggInterval_CRplot}
-\title{Figure with x-axis = center y-axis = range}
+\title{Center-range plot for interval data}
 \usage{
-ggInterval_CRplot(data = NULL,mapping = aes(NULL),plotAll=FALSE)
+ggInterval_CRplot(data = NULL,mapping = aes(NULL),plotAll=FALSE,
+                         addEllipse = TRUE,
+                         ellipseFill = "blue",
+                         ellipseAlpha = 0.3)
 }
 \arguments{
 \item{data}{A ggInterval object. It can also be either RSDA object or
@@ -18,16 +21,23 @@ the plot. You must supply mapping if there is no plot mapping.
 It is the same as the mapping of ggplot2.}
 
 \item{plotAll}{booleans, if TRUE, plot all variable together}
+
+\item{addEllipse}{logical, if TRUE (default), add a shaded ellipse layer.}
+
+\item{ellipseFill}{fill color of the ellipse layer. Default is "blue".}
+
+\item{ellipseAlpha}{alpha level of the ellipse layer. Default is 0.3.}
 }
 \value{
 Return a ggplot2 object.
 }
 \description{
-Visualize the relation between center and range.
+Visualize the relation between interval centers and ranges,
+with mean reference lines and an optional ellipse overlay.
 }
 \examples{
-ggInterval_CRplot(iris,aes(iris$Sepal.Length))
-
-mydata<-ggInterval::facedata
-ggInterval_CRplot(mydata,aes(AD,col="blue",pch=2))
+mydata <- ggInterval::facedata
+ggInterval_CRplot(mydata, aes(x = AD, col = "blue", shape = 2))
+ggInterval_CRplot(mydata, plotAll = TRUE)
+ggInterval_CRplot(mydata, plotAll = TRUE, addEllipse = FALSE)
 }

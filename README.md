@@ -1,68 +1,110 @@
 # ggInterval
 
-**ggInterval** (formerly **ggESDA**) is an R package for visualizing interval-valued symbolic data using `ggplot2`.
+[![CRAN status](https://www.r-pkg.org/badges/version/ggInterval)](https://CRAN.R-project.org/package=ggInterval)
+[![GitHub release](https://img.shields.io/github/v/release/hanmingwu1103/ggInterval?include_prereleases)](https://github.com/hanmingwu1103/ggInterval/releases)
+[![License: GPL-2+](https://img.shields.io/badge/license-GPL--2%2B-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 
-## Overview
+**ggInterval** extends `ggplot2` for interval-valued data. It provides
+plotting functions, data conversion helpers, and examples for symbolic data
+analysis workflows where each unit is described by lower and upper bounds
+rather than a single point.
 
-Exploratory data analysis (EDA) relies on graphical summaries such as boxplots, histograms, and scatterplots. Yet modern data are increasingly structurally rich: single observations may be recorded not as scalars but as intervals, histograms, or full empirical distributions — collectively known as **symbolic data**. Conventional graphics cannot natively accommodate these objects.
+The package was previously released as **ggESDA**. The current development line
+focuses on interval-valued visualization and companion tools for building
+interval data from classical tables.
 
-**ggInterval** bridges this gap by extending `ggplot2` to support interval-valued data. It provides seamless integration with the `ggplot2` workflow, enabling analysts to uncover structure and anomalies in interval-valued data that would remain hidden with traditional scalar-oriented graphics.
+## Highlights in 0.2.5
+
+- Adds interval-valued correlation heatmaps through `ggInterval_corrplot()`.
+- Adds `ggInterval_lineplot()` for interval time-series style displays, with
+  `ggInterval_tsplot()` retained as a backward-compatible alias.
+- Updates histogram, 2D histogram, scatter, radar, PCA, and index-image
+  examples and smoke tests.
+- Standardizes package citation metadata and dataset/reference documentation.
+- Includes tests for symbolic covariance and correlation method mappings.
 
 ## Installation
 
-Install the released version from CRAN:
+Install the CRAN release:
 
 ```r
 install.packages("ggInterval")
 ```
 
-Or install the development version from GitHub:
+Install the latest GitHub release:
 
 ```r
-# install.packages("devtools")
-devtools::install_github("hanmingwu1103/ggInterval")
+# install.packages("remotes")
+remotes::install_github("hanmingwu1103/ggInterval@v0.2.5")
 ```
 
-## Features
+Install the current development version:
 
-### Visualization Functions
-
-| Function | Description |
-|---|---|
-| `ggInterval_scatterplot` | Scatter plot for two continuous interval variables |
-| `ggInterval_scatterMatrix` | Scatter plot matrix for all continuous interval variables |
-| `ggInterval_3Dscatterplot` | 3D scatter plot for three interval variables |
-| `ggInterval_MMplot` | Min-max plot showing the range of each observation |
-| `ggInterval_CRplot` | Center-range plot showing the relation between center and range |
-| `ggInterval_indexplot` | Index plot displaying the range of each observation with margin bars |
-| `ggInterval_indexImage` | Index image plot |
-| `ggInterval_hist` | Histogram for interval data |
-| `ggInterval_2Dhist` | 2D histogram for interval data |
-| `ggInterval_2DhistMatrix` | 2D histogram matrix for interval data |
-| `ggInterval_boxplot` | Boxplot for interval data |
-| `ggInterval_radarplot` | Radar plot with multiple interval variables |
-| `ggInterval_PCA` | PCA biplot for interval data |
-
-### Data Transformation
-
-| Function | Description |
-|---|---|
-| `classic2sym` | Convert classical data to symbolic interval data via clustering or custom methods |
-| `RSDA2sym` | Convert RSDA symbolic objects to ggInterval format |
+```r
+# install.packages("remotes")
+remotes::install_github("hanmingwu1103/ggInterval")
+```
 
 ## Quick Start
 
 ```r
 library(ggInterval)
 
-# Convert classical data to symbolic interval data
-myIris <- classic2sym(iris, groupby = "Species")$intervalData
+# Convert classical data to interval-valued data
+iris_i <- classic2sym(iris, groupby = "Species")$intervalData
+
+# Scatter plot
+ggInterval_scatterplot(iris_i, aes(x = Petal.Length, y = Petal.Width))
+
+# Histogram
+ggInterval_hist(iris_i, aes(x = Petal.Length), method = "equal-bin")
+
+# 2D histogram with non-equidistant bins
+ggInterval_2Dhist(
+  iris_i,
+  aes(x = Petal.Length, y = Sepal.Length),
+  method = "unequal-bin"
+)$plot
+
+# Correlation heatmap
+ggInterval_corrplot(iris_i, method = "BG", triangle = "lower")
 ```
+
+## Main Functions
+
+### Visualization
+
+| Function | Description |
+| --- | --- |
+| `ggInterval_scatterplot()` | Scatter plot for two interval-valued variables |
+| `ggInterval_scatterMatrix()` | Scatter plot matrix for interval-valued variables |
+| `ggInterval_3Dscatterplot()` | 3D scatter plot for three interval-valued variables |
+| `ggInterval_hist()` | Histogram with equal-bin or unequal-bin construction |
+| `ggInterval_2Dhist()` | 2D histogram with equal-bin or unequal-bin construction |
+| `ggInterval_2DhistMatrix()` | Matrix of 2D histograms |
+| `ggInterval_MMplot()` | Min-max plot |
+| `ggInterval_CRplot()` | Center-range plot |
+| `ggInterval_indexplot()` | Index plot |
+| `ggInterval_indexImage()` | Index image plot |
+| `ggInterval_boxplot()` | Boxplot for interval-valued variables |
+| `ggInterval_radarplot()` | Radar plot |
+| `ggInterval_lineplot()` | Line plot for interval-valued data |
+| `ggInterval_PCA()` | PCA display for interval-valued data |
+| `ggInterval_corrplot()` | Correlation heatmap for interval-valued variables |
+
+### Data Conversion
+
+| Function | Description |
+| --- | --- |
+| `classic2sym()` | Convert classical data to interval-valued data |
+| `RSDA2sym()` | Convert RSDA symbolic objects to `ggInterval` format |
+
+## Example Graphics
 
 ### Scatter Plot
 
 ```r
-ggInterval_scatterplot(myIris, aes(x = Petal.Length, y = Petal.Width))
+ggInterval_scatterplot(iris_i, aes(x = Petal.Length, y = Petal.Width))
 ```
 
 <p align="center">
@@ -72,7 +114,7 @@ ggInterval_scatterplot(myIris, aes(x = Petal.Length, y = Petal.Width))
 ### Min-Max Plot
 
 ```r
-ggInterval_MMplot(myIris, aes(Sepal.Length))
+ggInterval_MMplot(iris_i, aes(Sepal.Length))
 ```
 
 <p align="center">
@@ -82,7 +124,7 @@ ggInterval_MMplot(myIris, aes(Sepal.Length))
 ### Center-Range Plot
 
 ```r
-ggInterval_CRplot(myIris, aes(Sepal.Length))
+ggInterval_CRplot(iris_i, aes(Sepal.Length))
 ```
 
 <p align="center">
@@ -92,7 +134,7 @@ ggInterval_CRplot(myIris, aes(Sepal.Length))
 ### Index Plot
 
 ```r
-ggInterval_indexplot(myIris, aes(x = Sepal.Width))
+ggInterval_indexplot(iris_i, aes(x = Sepal.Width))
 ```
 
 <p align="center">
@@ -102,7 +144,7 @@ ggInterval_indexplot(myIris, aes(x = Sepal.Width))
 ### Index Image
 
 ```r
-ggInterval_indexImage(myIris, aes(x = Sepal.Length))
+ggInterval_indexImage(iris_i, aes(x = Sepal.Length))
 ```
 
 <p align="center">
@@ -112,7 +154,7 @@ ggInterval_indexImage(myIris, aes(x = Sepal.Length))
 ### Boxplot
 
 ```r
-ggInterval_boxplot(myIris, aes(x = Sepal.Length))
+ggInterval_boxplot(iris_i, aes(x = Sepal.Length))
 ```
 
 <p align="center">
@@ -122,7 +164,7 @@ ggInterval_boxplot(myIris, aes(x = Sepal.Length))
 ### Histogram
 
 ```r
-ggInterval_hist(myIris, aes(x = Petal.Length))
+ggInterval_hist(iris_i, aes(x = Petal.Length))
 ```
 
 <p align="center">
@@ -132,21 +174,29 @@ ggInterval_hist(myIris, aes(x = Petal.Length))
 ### Radar Plot
 
 ```r
-ggInterval_radarplot(myIris, plotPartial = 1:3, showLegend = TRUE)
+ggInterval_radarplot(iris_i, plotPartial = 1:3, showLegend = TRUE)
 ```
 
 <p align="center">
   <img src="man/figures/README-radarplot.png" width="80%">
 </p>
 
-## Links
+## Documentation
 
-- **CRAN**: <https://CRAN.R-project.org/package=ggInterval>
-- **Vignette**: [ggInterval_intro.html](https://CRAN.R-project.org/package=ggInterval/vignettes/ggInterval_Intro.html)
+- CRAN: <https://CRAN.R-project.org/package=ggInterval>
+- GitHub releases: <https://github.com/hanmingwu1103/ggInterval/releases>
+- Issues: <https://github.com/hanmingwu1103/ggInterval/issues>
 
 ## Citation
 
-Jiang, B.S. and Wu, H.M. (2025), ggInterval: an R package for visualizing interval-valued data using ggplot2. R package version 0.2.3, https://CRAN.R-project.org/package=ggInterval.
+Use the installed package citation metadata:
+
+```r
+citation("ggInterval")
+```
+
+The package citation is shipped with `inst/CITATION` and points to the
+canonical CRAN package URL and DOI.
 
 ## License
 

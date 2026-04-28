@@ -2,10 +2,10 @@
 % Please edit documentation in R/ggInterval_indexImage.R
 \name{ggInterval_indexImage}
 \alias{ggInterval_indexImage}
-\title{An index plot presented by color image for interval data.}
+\title{Index image plot for interval-valued data}
 \usage{
-ggInterval_indexImage(data = NULL,mapping = aes(NULL),
-column_condition=TRUE,full_strip=FALSE, plotAll = FALSE)
+ggInterval_indexImage(data = NULL, mapping = aes(NULL),
+column_condition = TRUE, full_strip = FALSE, plotAll = FALSE)
 }
 \arguments{
 \item{data}{A ggInterval object. It can also be either RSDA object or
@@ -17,37 +17,39 @@ If specified and inherit. aes = TRUE (the default),
 it is combined with the default mapping at the top level of
 the plot. You must supply mapping if there is no plot mapping.}
 
-\item{column_condition}{Boolean variables, which mean the color
-present by column condition (if TRUE) or matrix condition (if FALSE)}
+\item{column_condition}{Logical. If \code{TRUE}, the color scale is
+applied separately within each variable (column condition). If
+\code{FALSE}, one common color scale is applied to the whole matrix
+(matrix condition).}
 
-\item{full_strip}{Boolean variables, which mean the strip present
-in full figure-width (if TRUE) or only in its variable values(if FALSE).}
+\item{full_strip}{Logical. If \code{TRUE}, each strip spans the full
+plotting width. If \code{FALSE}, strip widths reflect the interval ranges.}
 
-\item{plotAll}{Boolean, which determine if the heatmap type for visualizing
-full variables is used. default FALSE.}
+\item{plotAll}{Logical. If \code{TRUE}, produce a multivariate image plot
+for all continuous interval-valued variables. The default is \code{FALSE}.}
 }
 \value{
 Return a ggplot2 object.
 }
 \description{
-Visualize the range of the variables of each observations
-by using color image.The index image replace margin bar by color,thus
-it will be more visible for data.
+Visualize interval-valued observations with color strips.
+For a single variable, the display acts as a color-based analogue of an
+index plot. When \code{plotAll = TRUE}, the function produces a
+multivariate image plot across all continuous interval-valued variables.
 }
 \examples{
-d<-data.frame(qq=rnorm(1000,0,1))
-ggInterval_indexImage(d,aes(qq))
-
-mydata<-ggInterval::facedata
-p<-ggInterval_indexImage(mydata,aes(AD),full_strip=TRUE,column_condition = TRUE)
-#Recommend to add coord_flip() to make the plot more visible
-p+coord_flip()
-
-myIris<-classic2sym(iris,groupby="Species")
-myIris<-myIris$intervalData
-p<-ggInterval_indexImage(myIris,aes(myIris$Petal.Length),full_strip=FALSE,column_condition=TRUE)
-p
-
-ggInterval_indexImage(mtcars,aes(disp))+labs(x="anything")
+mydata <- ggInterval::facedata
+p <- ggInterval_indexImage(mydata, aes(x = AD),
+  full_strip = TRUE, column_condition = TRUE)
+# Recommend adding coord_flip() to make the single-variable display clearer.
+p + coord_flip()
+ggInterval_indexImage(
+  mydata,
+  plotAll = TRUE,
+  full_strip = TRUE,
+  column_condition = FALSE
+) +
+  scale_colour_distiller(palette = "Blues", direction = 1)
+ggInterval_indexImage(mydata, plotAll = TRUE, full_strip = FALSE)
 
 }

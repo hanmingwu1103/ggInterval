@@ -33,21 +33,41 @@ correlation in the presence of missing values. This must be (an abbreviation of)
  one of the strings 'everything', 'all.obs', 'complete.obs', 'na.or.complete',
  or 'pairwise.complete.obs'.}
 
-\item{method}{The method to be use.}
+\item{method}{The method to use.}
 }
 \value{
-Return a real number.
+Return a real number in [-1, 1].
 }
 \description{
 This function compute the symbolic correlation
 }
+\details{
+Supported interval-valued methods are:
+\itemize{
+  \item \code{"centers"}: correlation of interval centers.
+  \item \code{"B"}: Billard correlation.
+  \item \code{"BD"}: Billard-Diday correlation.
+  \item \code{"BG"}: Bertrand-Goupil correlation.
+}
+For \code{"B"}, \code{"BD"}, and \code{"BG"}, the denominator uses the
+corresponding method-matched standard deviation.
+}
 \references{
-Billard L. and  Diday E. (2006).
-Symbolic data analysis: Conceptual statistics and data mining. Wiley, Chichester.
+Bertrand, Patrice and Goupil, Francoise (2000). Descriptive Statistics for
+Symbolic Data. In Hans-Hermann Bock and Edwin Diday (eds.),
+\emph{Analysis of Symbolic Data}, pp. 106--124. Berlin and Heidelberg:
+Springer.
 
-Rodriguez, O. (2000).
-Classification et Modeles Lineaires en Analyse des Donnees Symboliques. Ph.D. Thesis,
-Paris IX-Dauphine University.
+Billard, Lynne and Diday, Edwin (2006). \emph{Symbolic Data Analysis:
+Conceptual Statistics and Data Mining}. Chichester, UK: John Wiley and Sons.
+
+Billard, Lynne (2008). Sample covariance functions for complex quantitative
+data. In \emph{Proceedings of the World IASC Conference}, pp. 157--163,
+Yokohama, Japan.
+
+Rodriguez-Rojas, Oldemar (2000). \emph{Classification et modeles lineaires
+en analyse des donnees symboliques}. PhD thesis, Universite Paris IX
+Dauphine.
 }
 \author{
 Oldemar Rodriguez Rojas

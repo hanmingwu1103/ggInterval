@@ -31,17 +31,9 @@ Visualize the range of the variables of each observations
 by marking minimal and maximal point.
 }
 \examples{
-ggInterval_MMplot(mtcars,aes(disp))
-
-mydata2<-ggInterval::Cardiological
-ggInterval_MMplot(mydata2,aes(mydata2$Pulse,size=3))
-
-d<-mapply(c(10,20,40,80,160),c(20,40,80,160,320),FUN=runif,n=1000)
-d<-data.frame(qq=matrix(d,ncol=1))
-ggInterval_MMplot(d,aes(qq))
-
-myIris<-classic2sym(iris,groupby="Species")
-myIris<-myIris$intervalData
-ggInterval_MMplot(myIris,aes(myIris$Petal.Length))+
-   theme_classic()
+mydata <- ggInterval::facedata
+ggInterval_MMplot(mydata, aes(x = AD))
+ggInterval_MMplot(mydata, aes(x = AD, size = 3))
+ggInterval_MMplot(mydata, plotAll = TRUE, scaleXY = "global") +
+  theme_classic()
 }

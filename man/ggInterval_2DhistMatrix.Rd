@@ -4,45 +4,76 @@
 \alias{ggInterval_2DhistMatrix}
 \title{2-Dimension histogram matrix}
 \usage{
-ggInterval_2DhistMatrix(data = NULL,mapping = aes(NULL)
-,xBins = 8,yBins=8,removeZero = FALSE,
-addFreq = TRUE)
+ggInterval_2DhistMatrix(data = NULL, mapping = aes(NULL),
+method = "equal-bin", xBins = 8, yBins = 8,
+display = "p", palette = "Blues", direction = 1, tau = 0,
+removeZero = FALSE, cell_labels = FALSE, label_rule = "above-mean",
+addFreq = NULL)
 }
 \arguments{
-\item{data}{A ggInterval object. It can also be either RSDA object or
-classical data frame, which will be automatically convert to ggInterval
-data.}
+\item{data}{A ggInterval object. It can also be either an RSDA object or
+a classical data frame, which will be automatically converted to
+ggInterval data.}
 
 \item{mapping}{Set of aesthetic mappings created by aes() or aes_().
-If specified and inherit. aes = TRUE (the default),
-it is combined with the default mapping at the top level of
-the plot. You must supply mapping if there is no plot mapping.
-It is the same as the mapping of ggplot2.}
+If specified and inherit.aes = TRUE (the default), it is combined with
+the default mapping at the top level of the plot. It is the same as the
+mapping of ggplot2. This function ignores \code{x} and \code{y} mappings
+and plots all continuous interval-valued variables.}
 
-\item{xBins}{x axis bins,which mean how many bins
-x variable will be separate into}
+\item{method}{Histogram partition method. Use \code{"equal-bin"} for
+equally spaced bins or \code{"unequal-bin"} for non-equidistant bins
+defined by the observed interval endpoints.}
 
-\item{yBins}{y axis bins. It is the same as xBins}
+\item{xBins}{Number of x-axis bins used when \code{method = "equal-bin"}.}
 
-\item{removeZero}{whether remove data whose frequency is equal to zero}
+\item{yBins}{Number of y-axis bins used when \code{method = "equal-bin"}.}
 
-\item{addFreq}{where add frequency text in each cells.}
+\item{display}{Metric shown in the cells. Use \code{"p"} for relative
+frequency, \code{"f"} for weighted frequency, or \code{"h"} for density.}
+
+\item{palette}{ColorBrewer palette passed to \code{scale_fill_distiller()}.}
+
+\item{direction}{Direction passed to \code{scale_fill_distiller()}.}
+
+\item{tau}{Non-negative tolerance used when \code{method = "unequal-bin"}.
+Consecutive breakpoints whose gaps are smaller than \code{tau} are merged.}
+
+\item{removeZero}{Whether remove cells whose frequency is equal to zero.}
+
+\item{cell_labels}{Logical. If \code{TRUE}, add cell labels.}
+
+\item{label_rule}{Rule used when \code{cell_labels = TRUE}. The default
+\code{"above-mean"} shows only cells whose displayed values exceed the
+mean value within the matrix. Alternatives are \code{"nonzero"} and
+\code{"all"}.}
+
+\item{addFreq}{Deprecated alias for \code{cell_labels}.}
 }
 \value{
-Return a plot with ggplot2 object
+Return a ggplot2 object.
 }
 \description{
-Visualize the all continuous variable distribution
-by dividing both the x axis and y axis into bins,and calculating
-the frequency of observation interval in each bin.Eventually
-show it by a matrix plot. Note: this function will automatically
-filter out the discrete variables,and plot all continuous in
-input data, so it can not be necessary that give the particularly
-variables in aes such like (aes(x = x, y = y)). It isn't also
-recommended to deal with too many variables because the
-big O in calculating full matrix will be too large.
+Visualize all continuous interval-valued variables with a
+matrix of 2D histograms. Each off-diagonal panel shows a 2D histogram for
+a pair of variables, and each diagonal panel displays the variable name.
 }
 \examples{
-ggInterval_2DhistMatrix(oils, xBins = 5, yBins = 5)
+ggInterval_2DhistMatrix(
+  oils,
+  xBins = 5,
+  yBins = 5,
+  display = "p",
+  palette = "Blues",
+  cell_labels = TRUE
+)
+
+ggInterval_2DhistMatrix(
+  oils,
+  method = "unequal-bin",
+  display = "p",
+  palette = "Blues",
+  tau = 0.5
+)
 
 }

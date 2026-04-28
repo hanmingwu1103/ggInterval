@@ -1,6 +1,7 @@
 #' @name ggInterval_CRplot
-#' @title Figure with x-axis = center y-axis = range
-#' @description  Visualize the relation between center and range.
+#' @title Center-range plot for interval data
+#' @description  Visualize the relation between interval centers and ranges,
+#' with mean reference lines and an optional ellipse overlay.
 #' @import ggplot2
 #' @importFrom RSDA is.sym.interval
 #' @param data A ggInterval object. It can also be either RSDA object or
@@ -12,17 +13,26 @@
 #' the plot. You must supply mapping if there is no plot mapping.
 #' It is the same as the mapping of ggplot2.
 #' @param plotAll booleans, if TRUE, plot all variable together
+#' @param addEllipse logical, if TRUE (default), add a shaded ellipse layer.
+#' @param ellipseFill fill color of the ellipse layer. Default is "blue".
+#' @param ellipseAlpha alpha level of the ellipse layer. Default is 0.3.
 #' @return Return a ggplot2 object.
-#' @usage ggInterval_CRplot(data = NULL,mapping = aes(NULL),plotAll=FALSE)
+#' @usage ggInterval_CRplot(data = NULL,mapping = aes(NULL),plotAll=FALSE,
+#'                          addEllipse = TRUE,
+#'                          ellipseFill = "blue",
+#'                          ellipseAlpha = 0.3)
 #' @examples
-#' ggInterval_CRplot(iris,aes(iris$Sepal.Length))
-#'
-#' mydata<-ggInterval::facedata
-#' ggInterval_CRplot(mydata,aes(AD,col="blue",pch=2))
+#' mydata <- ggInterval::facedata
+#' ggInterval_CRplot(mydata, aes(x = AD, col = "blue", shape = 2))
+#' ggInterval_CRplot(mydata, plotAll = TRUE)
+#' ggInterval_CRplot(mydata, plotAll = TRUE, addEllipse = FALSE)
 #' @export
 ggInterval_CRplot <- function(data = NULL,
-                                   mapping = aes(NULL),
-                                   plotAll = FALSE) {
+                              mapping = aes(NULL),
+                              plotAll = FALSE,
+                              addEllipse = TRUE,
+                              ellipseFill = "blue",
+                              ellipseAlpha = 0.3) {
   #data preparing
   argsNum <- length(mapping)
   args <- lapply(mapping[1:argsNum], FUN = rlang::get_expr)
@@ -133,7 +143,16 @@ ggInterval_CRplot <- function(data = NULL,
       geom_vline(aes(xintercept = meanC), lty = 2) +
       geom_hline(aes(yintercept = meanR), lty = 2) +
       labs(x = "center", y = "range") +
-      guides(size = FALSE)
+      guides(size = "none")
+    if (isTRUE(addEllipse)) {
+      base <- base + stat_ellipse(
+        geom = "polygon",
+        fill = ellipseFill,
+        colour = ellipseFill,
+        alpha = ellipseAlpha,
+        linewidth = 0.35
+      )
+    }
     if (plotAll) {
       base <- base + facet_grid(. ~ var)
     }

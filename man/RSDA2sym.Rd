@@ -15,7 +15,7 @@ must be a data frame and match to data.}
 }
 \value{
 Return an object of class "ggInterval", which
-have a interval data and others as follows.
+has interval-valued data and related outputs as follows.
 \itemize{
   \item intervalData - The Interval data after converting also known
   as a RSDA object.

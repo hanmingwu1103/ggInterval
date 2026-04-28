@@ -2,9 +2,10 @@
 % Please edit documentation in R/ggInterval_scatterMatrix.R
 \name{ggInterval_scatterMatrix}
 \alias{ggInterval_scatterMatrix}
-\title{scatter plot for all variable by interval data.}
+\title{Scatterplot matrix for interval-valued data}
 \usage{
-ggInterval_scatterMatrix(data = NULL,mapping = aes(NULL), showLegend=FALSE)
+ggInterval_scatterMatrix(data = NULL, mapping = aes(NULL),
+showLegend = FALSE, borderLinewidth = 0.08)
 }
 \arguments{
 \item{data}{A ggInterval object. It can also be either RSDA object or
@@ -17,37 +18,29 @@ it is combined with the default mapping at the top level of
 the plot. You must supply mapping if there is no plot mapping.}
 
 \item{showLegend}{whether show the legend.}
+
+\item{borderLinewidth}{Numeric border width used for the interval rectangles.}
 }
 \value{
-Return a plot with no longer a ggplot2 object,instead
-of a marrangeGrob object.
+Return a ggplot2 object.
 }
 \description{
-Visualize the all continuous variable distribution
-by rectangle for both x-axis and y-axis with a matrix grid.
-Note: this function will automatically
-filter out the discrete variables,and plot all continuous in
-input data,so it can not be necessary that give the particularly
-variables in aes such like (aes(x = x, y = y)). It isn't also
-recommended to deal with too many variables because the
-big O in calculating full matrix will be too large.
+Visualize all continuous interval-valued variables with
+a matrix of pairwise interval scatterplots. Each off-diagonal panel
+shows interval rectangles for one variable pair, whereas each diagonal
+panel displays the variable name. This function automatically filters
+out non-interval variables and plots all remaining continuous interval
+variables, so explicit \code{x} and \code{y} mappings are not required.
+It is not recommended to apply the function to too many variables
+because the full pairwise matrix becomes computationally expensive and
+visually crowded.
 }
 \examples{
-a<-rnorm(1000,0,5)
-b<-runif(1000,-20,-10)
-c<-rgamma(1000,10,5)
-d<-as.data.frame(cbind(norm=a,unif=b,gamma_10_5=c))
-ggInterval_scatterMatrix(d)
-
-
-ggInterval_scatterMatrix(mtcars[,c("mpg","wt","qsec")],
-    aes(col="red",lty=2,fill="blue",alpha=0.3))
-
-
-myIris <- classic2sym(iris,groupby = "Species")$intervalData
-ggInterval_scatterMatrix(myIris[,1:3])
-
-
-mydata <- ggInterval::Cardiological
-ggInterval_scatterMatrix(mydata[,1:3],aes(fill="black",alpha=0.2))
+mydata <- ggInterval::facedata
+ggInterval_scatterMatrix(mydata[, 1:3])
+ggInterval_scatterMatrix(
+  mydata[, 1:3],
+  aes(fill = "black", alpha = 0.2),
+  borderLinewidth = 0.15
+)
 }

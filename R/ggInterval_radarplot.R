@@ -1,8 +1,11 @@
 #' @name ggInterval_radarplot
-#' @title A interval Radar plot
-#' @description  Using ggplot2 package to make a radar plot with multiple
-#' variables.Each variables contains min values and max values as a
-#' symbolic data.
+#' @title Radar plot for symbolic data
+#' @description Visualize interval-valued and mixed symbolic data with a
+#' radar-style display. Interval-valued variables are represented through
+#' their lower and upper bounds, while modal multivalued variables can be
+#' shown with stacked bars. When \code{type = "quantile"}, the function
+#' summarizes all observations of each interval-valued variable through
+#' nested empirical quantile bands.
 #' @import ggplot2 ggforce
 #' @importFrom gridExtra marrangeGrob
 #' @importFrom RSDA is.sym.interval
@@ -10,25 +13,29 @@
 #' @param data A ggInterval object. It can also be either RSDA object or
 #' classical data frame(not recommended),which will be automatically convert to ggInterval
 #' data.
-#' @param layerNumber number of layer of a concentric circle,usually
-#' to visuallize the reach of a observation in particularly variable.
-#' @param inOneFig whether plot all observations in one figure.if not,
-#' it will generate a new windows containing distinct observations.
-#' @param showLegend whether show the legend.
-#' @param showXYLabs whether show the x,y axis labels.
-#' @param plotPartial a numeric vector,which is the row index from
-#' the data.if it is not null, it will extract the row user deciding
-#' to draw a radar plot from original data.Notes : the data must be
-#' an interval data if the plotPartial is not null.
-#' @param base_lty line type in base figure
-#' @param base_circle boolean, if true, it will generate inner circle.
-#' @param alpha aesthetic alpha of fill color
-#' @param addText add the value of interval-valued variables in figure
-#' @param type different type of radar,it can be "default","rect","quantile"
-#' @param quantileNum if type == "quantile", it will provide the number of percentage
-#' @param Drift The drift term, which determines the radar values beginning.
-#' @param addText_modal add the factor of modal multi-valued variables in figure..
-#' @param addText_modal.p add the value of modal multi-valued variables in figure..
+#' @param layerNumber Number of concentric guide layers in the radar display.
+#' @param inOneFig Logical. If \code{TRUE}, draw all selected observations in
+#' one figure. Otherwise, generate separate figures for the selected
+#' observations.
+#' @param showLegend Logical. Whether to show the legend.
+#' @param showXYLabs Logical. Whether to show the x- and y-axis labels.
+#' @param plotPartial Numeric vector giving the row indices to plot. If
+#' \code{NULL}, all observations are used. This argument is ignored when
+#' \code{type = "quantile"} because the quantile plot summarizes all
+#' observations.
+#' @param base_lty Line type used in the base figure.
+#' @param base_circle Logical. If \code{TRUE}, add inner guide circles.
+#' @param alpha Alpha transparency for filled elements.
+#' @param addText Logical. Whether to add interval-valued labels to the plot.
+#' @param type Radar representation. Use \code{"default"} for polygon
+#' intervals, \code{"rect"} for rectangle intervals, or \code{"quantile"}
+#' for the quantile-radar display.
+#' @param quantileNum Number of quantile layers when
+#' \code{type = "quantile"}.
+#' @param Drift Drift term controlling where the radar values begin.
+#' @param addText_modal Logical. Whether to add labels for modal
+#' multivalued variables.
+#' @param addText_modal.p Logical. Whether to add modal percentages.
 #' @usage ggInterval_radarplot(data=NULL,layerNumber=3,
 #' inOneFig=TRUE,showLegend=TRUE,showXYLabs=FALSE,
 #' plotPartial=NULL,
@@ -42,29 +49,44 @@
 #' addText_modal=TRUE,
 #' addText_modal.p=FALSE)
 #' @examples
-#' # must specify plotPartial to some certain rows you want to plot
+#' \donttest{
+#' # must specify plotPartial to the rows you want to plot
 #' Environment.n <- Environment[, 5:17]
 #' ggInterval_radarplot(Environment.n,
-#'                 plotPartial = 2,
-#'                 showLegend = FALSE,
-#'                 base_circle = TRUE,
-#'                 base_lty = 2,
-#'                 addText = FALSE
+#'   plotPartial = 2,
+#'   showLegend = FALSE,
+#'   base_circle = TRUE,
+#'   base_lty = 2,
+#'   addText = FALSE
 #') +
-#'  labs(title = "") +
-#'  scale_fill_manual(values = c("gray50")) +
-#'  scale_color_manual(values = c("red"))
+#'   labs(title = "") +
+#'   scale_fill_manual(values = c("gray50")) +
+#'   scale_color_manual(values = c("red"))
 #'
 #' ggInterval_radarplot(Environment,
-#'                 plotPartial = 2,
-#'                 showLegend = FALSE,
-#'                 base_circle = FALSE,
-#'                 base_lty = 1,
-#'                 addText = TRUE
+#'   plotPartial = 2,
+#'   showLegend = FALSE,
+#'   base_circle = FALSE,
+#'   base_lty = 1,
+#'   addText = TRUE,
+#'   type = "rect"
 #') +
-#'  labs(title = "") +
-#'  scale_fill_manual(values = c("gray50")) +
-#'  scale_color_manual(values = c("gray50"))
+#'   labs(title = "") +
+#'   scale_fill_manual(values = c("gray50")) +
+#'   scale_color_manual(values = c("gray50"))
+#'
+#' ggInterval_radarplot(
+#'   facedata,
+#'   base_circle = FALSE,
+#'   base_lty = 1,
+#'   type = "quantile",
+#'   quantileNum = 5,
+#'   showLegend = TRUE,
+#'   Drift = 0
+#' ) +
+#'   scale_fill_brewer(palette = "Greys") +
+#'   labs(title = "", fill = "Quantiles")
+#' }
 #'
 #' @export
 ggInterval_radarplot <- function(data = NULL,
@@ -508,10 +530,11 @@ ggInterval_radarplot <- function(data = NULL,
             y2 = plotMax.temp$sin
           )
           if (allnP == nP) {
-            newTemp <- rbind(plotMin.temp,
+            plotMin.rev <- plotMin.temp[nrow(plotMin.temp):1, ]
+            newTemp <- rbind(plotMax.temp,
+                             plotMax.temp[1, ],
                              plotMin.temp[1, ],
-                             plotMax.temp,
-                             plotMax.temp[1, ])
+                             plotMin.rev)
             myPolyData <- rbind(myPolyData, newTemp)
           } else{
             #add nominal
@@ -546,12 +569,14 @@ ggInterval_radarplot <- function(data = NULL,
             #tmp2[,c("cos","sin")]<-c(tmp$x,tmp$y)
             #myPathData<-rbind(myPathData,data.frame(x1=tmp$x,y1=tmp$y,x2=tmp$x,y2=tmp$y))
             
-            newTemp <- rbind(plotMin.temp,
+            plotMin.rev <- plotMin.temp[nrow(plotMin.temp):1, ]
+            tmp2.rev <- tmp2[nrow(tmp2):1, ]
+            newTemp <- rbind(plotMax.temp,
                              tmp2,
+                             plotMax.temp[1, ],
                              plotMin.temp[1, ],
-                             plotMax.temp,
-                             tmp2,
-                             plotMax.temp[1, ])
+                             tmp2.rev,
+                             plotMin.rev)
             myPolyData <- rbind(myPolyData, newTemp)
           }
           p <- p + geom_path(data = myPathData,
@@ -842,11 +867,11 @@ ggInterval_radarplot <- function(data = NULL,
     }
     #showLegend
     if (showLegend) {
-      p <- p + guides(col = F)
+      p <- p + guides(col = "none")
     } else{
-      p <- p + guides(fill = F,
-                      col = F,
-                      alpha = F)
+      p <- p + guides(fill = "none",
+                      col = "none",
+                      alpha = "none")
     }
     if (type == "quantile") {
       myTitle <- "Radar : quantile plot"
@@ -969,7 +994,7 @@ ggInterval_radarplot <- function(data = NULL,
   if (type == "quantile") {
     colShift <- 4
     myValues <- rev(grey.colors(quantileNum + 1 + colShift))[-c(1:colShift)]
-    p <- p + guides(alpha = F) +
+    p <- p + guides(alpha = "none") +
       scale_fill_manual(name = "quantile percentage", values = myValues) +
       scale_colour_manual(values = myValues)
   }
@@ -1019,11 +1044,12 @@ plotFun <- function(p,
     )
     
     if (allnP == nP) {
-      myPolyData <- rbind(plotMin.temp,
+      plotMin.rev <- plotMin.temp[nrow(plotMin.temp):1, ]
+      myPolyData <- rbind(plotMax.temp,
+                          plotMax.temp[1, ],
                           plotMin.temp[1, ],
-                          plotMax.temp,
-                          plotMax.temp[1, ])
-      
+                          plotMin.rev)
+
     } else{
       #add nominal
       tmp2 <- NULL
@@ -1045,12 +1071,14 @@ plotFun <- function(p,
                             ))
         j <- j + 1
       }
-      newTemp <- rbind(plotMin.temp,
+      plotMin.rev <- plotMin.temp[nrow(plotMin.temp):1, ]
+      tmp2.rev <- tmp2[nrow(tmp2):1, ]
+      newTemp <- rbind(plotMax.temp,
                        tmp2,
+                       plotMax.temp[1, ],
                        plotMin.temp[1, ],
-                       plotMax.temp,
-                       tmp2,
-                       plotMax.temp[1, ])
+                       tmp2.rev,
+                       plotMin.rev)
       myPolyData <- rbind(myPolyData, newTemp)
     }
     base <- p + geom_path(data = myPathData, aes(x = myPathData$x1, y =
@@ -1263,11 +1291,11 @@ plotFun <- function(p,
       scale_y_continuous(limits = c(-xyLimits, xyLimits))
   }#showLegend
   if (showLegend) {
-    base <- base + guides(fill = F, col = F)
+    base <- base + guides(fill = "none", col = "none")
   } else{
-    base <- base + guides(fill = F,
-                          col = F,
-                          alpha = F)
+    base <- base + guides(fill = "none",
+                          col = "none",
+                          alpha = "none")
   }
   
   if (base_circle) {
@@ -1291,7 +1319,7 @@ plotFun <- function(p,
       label = tmp$label
     ))
   }
-  base <- base + theme_bw() + guides(alpha = F)
+  base <- base + theme_bw() + guides(alpha = "none")
   return(base)
 }
 data2Vec <- function(iData = NULL,

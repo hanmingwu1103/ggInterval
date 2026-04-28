@@ -3,18 +3,19 @@
 #' @description Visualize the three continuous variable distribution
 #' by collecting all vertices in each interval to form a shape of
 #' cube.Also show the difference between each group.
-#' @param data A ggSDA object. It can also be either RSDA object or
-#' classical data frame, which will be automatically convert to ggSDA
+#' @param data A ggInterval object. It can also be either an RSDA object or
+#' a classical data frame, which will be automatically converted to ggInterval
 #' data.
 #' @param mapping Set of aesthetic mappings created by aes() or aes_().
 #' If specified and inherit. aes = TRUE (the default),
 #' it is combined with the default mapping at the top level of
 #' the plot. You must supply mapping if there is no plot mapping.
 #' It is the same as the mapping of ggplot2.
-#' @param scale A boolean variable,TRUE, standardlize data. FALSE, not standardlize.
+#' @param scale A boolean variable. \code{TRUE} standardizes the data and
+#' \code{FALSE} leaves the data unchanged.
 #' If variance is too large(or small) or the difference between
-#' two variables are too large,it will be distortion or unseeable,which may
-#' happen in different units or others. So, a standardlize way is necessary.
+#' two variables are too large,it will be distorted or difficult to see, which
+#' may happen when variables are measured in different units.
 #' @return Return a ggplot2 object (It will still be 2-Dimension).
 #' @usage ggInterval_3Dscatterplot(data = NULL,mapping = aes(NULL),scale=FALSE)
 #' @examples

@@ -2,10 +2,12 @@
 % Please edit documentation in R/ggInterval_PCA.R
 \name{ggInterval_PCA}
 \alias{ggInterval_PCA}
-\title{Vertice-PCA for interval data}
+\title{Vertices PCA for interval data}
 \usage{
 ggInterval_PCA(data = NULL,mapping = aes(NULL),plot=TRUE,
-                      concepts_group=NULL, poly = FALSE, adjust = TRUE)
+                      concepts_group=NULL, poly = FALSE, adjust = TRUE,
+                      showLabels = TRUE, labelSize = 3,
+                      checkOverlap = FALSE)
 }
 \arguments{
 \item{data}{A ggInterval object. It can also be either RSDA object or
@@ -26,9 +28,16 @@ its inner object}
 \item{poly}{if plot a poly result}
 
 \item{adjust}{adjust sign of the principal component}
+
+\item{showLabels}{Logical. If \code{TRUE}, label interval scores in the plot.}
+
+\item{labelSize}{Numeric text size used when \code{showLabels = TRUE}.}
+
+\item{checkOverlap}{Logical. Passed to \code{geom_text()} to suppress
+overlapping labels when needed.}
 }
 \value{
-A ggplot object for PC1,PC2,and a interval scores and others.
+A ggplot object for PC1, PC2, and interval scores with related outputs.
 \itemize{
   \item scores_interval - The interval scores after PCA.
   \item ggplotPCA - a ggplot object with x-axis and y-axis are PC1 and
@@ -39,21 +48,15 @@ A ggplot object for PC1,PC2,and a interval scores and others.
 \description{
 ggInterval_PCA performs a principal components
 analysis on the given numeric interval data and returns the
-results like princomp, ggplot object and a interval scores.
+results of princomp, a ggplot object, and interval scores.
 }
 \examples{
-ggInterval_PCA(iris)
-
-mydata2<-ggInterval::Cardiological
-ggInterval_PCA(mydata2,aes(col="red",alpha=0.2))
-
-d<-mapply(c(10,20,40,80,160),c(20,40,80,160,320),FUN=runif,n=1000)
-d<-data.frame(qq=matrix(d,ncol=4))
-ggInterval_PCA(d)
-
-myIris<-classic2sym(iris,"Species")
-p<-ggInterval_PCA(myIris,plot=FALSE)
+\donttest{
+Subjects <- substr(rownames(facedata), 1, 3)
+p <- ggInterval_PCA(facedata, plot = FALSE, concepts_group = Subjects)
 p$ggplotPCA
 p$scores_interval
+ggInterval_PCA(facedata, poly = TRUE, concepts_group = Subjects)
+}
 
 }

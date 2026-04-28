@@ -1,8 +1,8 @@
 #' @name ggInterval_scatterplot
-#' @title scatter plot for two continuous interval data
-#' @description Visualize the twwo continuous variable distribution
-#' by rectangle and each of its width and heigth represents a
-#' interval of the data.
+#' @title Scatter plot for two continuous interval variables
+#' @description Visualize the distribution of two continuous
+#' interval-valued variables with rectangles whose widths and heights
+#' represent the corresponding intervals.
 #' @import rlang ggplot2
 #' @importFrom RSDA is.sym.interval
 #' @param data A ggInterval object.It can also be either RSDA object or
@@ -12,42 +12,58 @@
 #' If specified and inherit. aes = TRUE (the default),
 #' it is combined with the default mapping at the top level of
 #' the plot. You must supply mapping if there is no plot mapping.
+#' @param showLabels Logical. If \code{TRUE}, add row labels to the rectangles.
+#' @param labelSize Numeric text size used when \code{showLabels = TRUE}.
+#' @param labelPosition Character label position used when
+#' \code{showLabels = TRUE}. One of \code{"topright"}, \code{"topleft"},
+#' \code{"bottomright"}, or \code{"bottomleft"}.
+#' @param labelNudgeX Numeric horizontal adjustment applied to label positions.
+#' @param labelNudgeY Numeric vertical adjustment applied to label positions.
+#' @param checkOverlap Logical. Passed to \code{geom_text()} to suppress
+#' overlapping labels when needed.
 #' @param ... Others in ggplot2.
 #' @return Return a ggplot2 object.
-#' @usage ggInterval_scatterplot(data = NULL,mapping = aes(NULL), ...)
+#' @usage ggInterval_scatterplot(data = NULL,mapping = aes(NULL),
+#' showLabels = TRUE, labelSize = 3,
+#' labelPosition = "topright", labelNudgeX = 0, labelNudgeY = 0,
+#' checkOverlap = FALSE, ...)
 #' @examples
-#' \donttest{
-#' a<-rnorm(1000,0,5)
-#' b<-runif(1000,-20,-10)
-#' d<-as.data.frame(cbind(norm=a,unif=b))
-#' ggInterval_scatterplot(d,aes(a,b))
-#'
-#'
-#' ggInterval_scatterplot(mtcars[,c("mpg","wt","qsec")],
-#'     aes(x=mpg,y=wt,
-#'     col="red",lty=2,fill="blue",alpha=0.3))
-#'
-#'
-#' myIris <- classic2sym(iris,groupby = "Species")$intervalData
-#' p<-ggInterval_scatterplot(myIris,aes(myIris$Petal.Length,myIris$Petal.Width))
-#' p
-#' p+scale_fill_manual(labels=rownames(myIris),
-#'                    values=c("red","blue","green"),
-#'                    name="Group")
-#'
-#'
-#' mydata <- ggInterval::facedata
-#' p<-ggInterval_scatterplot(mydata[1:10,],aes(AD,BC,alpha=0.2))
-#' p+scale_fill_manual(labels=rownames(mydata)[1:10],
-#'                    values=rainbow(10),
-#'                    name="Group")
-#' }
+#' Subjects <- substr(rownames(facedata), 1, 3)
+#' ggInterval_scatterplot(facedata, aes(x = AD, y = BC))
+#' ggInterval_scatterplot(
+#'   facedata,
+#'   aes(x = AD, y = BC, fill = Subjects),
+#'   showLabels = TRUE,
+#'   labelSize = 2.6,
+#'   labelPosition = "topright",
+#'   labelNudgeX = 0.8,
+#'   labelNudgeY = 0.15,
+#'   checkOverlap = TRUE,
+#'   col = "black"
+#' )
+#' p <- ggInterval_scatterplot(facedata[1:10, ], aes(x = AD, y = BC, alpha = 0.2))
+#' p + scale_fill_manual(
+#'   labels = rownames(facedata)[1:10],
+#'   values = rainbow(10),
+#'   name = "Group"
+#' )
 #' @export
 ggInterval_scatterplot <- function(data = NULL,
-                               mapping = aes(NULL),
-                               ...) {
+                                   mapping = aes(NULL),
+                                   showLabels = TRUE,
+                                   labelSize = 3,
+                                   labelPosition = "topright",
+                                   labelNudgeX = 0,
+                                   labelNudgeY = 0,
+                                   checkOverlap = FALSE,
+                                   ...) {
   #data preparing
   . <- NULL
+  caller_env <- parent.frame()
+  labelPosition <- match.arg(
+    labelPosition,
+    choices = c("topright", "topleft", "bottomright", "bottomleft")
+  )
   argsNum <- length(mapping)
   args <- lapply(mapping[1:argsNum], FUN = rlang::get_expr)
   this.x <- args$x
@@ -69,6 +85,29 @@ ggInterval_scatterplot <- function(data = NULL,
   
   #start process
   with(data, {
+    resolve_aes_value <- function(expr, n_expected) {
+      if (is.null(expr)) {
+        return(NULL)
+      }
+      value <- tryCatch(
+        eval(expr, envir = data, enclos = caller_env),
+        error = function(err) NULL
+      )
+      if (is.null(value)) {
+        return(NULL)
+      }
+      if (!(is.atomic(value) || is.factor(value))) {
+        return(NULL)
+      }
+      if (length(value) == 1) {
+        return(rep(value, n_expected))
+      }
+      if (length(value) != n_expected) {
+        stop("ERROR : Aesthetic values must have length 1 or match the number of observations.")
+      }
+      value
+    }
+    
     #get attrs
     attr1 <- which(unlist(lapply(
       data[, 1:p], FUN = identical, x = eval(this.x)
@@ -91,13 +130,10 @@ ggInterval_scatterplot <- function(data = NULL,
     }
     
     #build data.frame for ggplot
-    d = data.frame(
-      x1 = iData[[attr1]]$min
-      ,
-      x2 = iData[[attr1]]$max
-      ,
-      y1 = iData[[attr2]]$min
-      ,
+    d <- data.frame(
+      x1 = iData[[attr1]]$min,
+      x2 = iData[[attr1]]$max,
+      y1 = iData[[attr2]]$min,
       y2 = iData[[attr2]]$max
     )
     
@@ -112,46 +148,84 @@ ggInterval_scatterplot <- function(data = NULL,
     d <- addFactor(rawData = data, iData = d)
     
     
-    fcLocation <- c(which(names(usermapping) == "fill"), which(names(usermapping) == "col"))
+    fill_expr <- args$fill
+    colour_expr <- args$colour
+    if (is.null(colour_expr)) {
+      colour_expr <- args$color
+    }
+    if (is.null(colour_expr)) {
+      colour_expr <- args$col
+    }
+    fcLocation <- which(names(usermapping) %in% c("fill", "colour", "color", "col"))
     if (length(fcLocation) != 0) {
       usermapping <- usermapping[-fcLocation] #Aesthetic without fill, col
     }
-    # if(is.null(args$fill)){
-    #   args$fill <- grDevices::gray.colors(n)
-    # }
-    # if(is.null(args$col)){
-    #   args$col <- grDevices::gray.colors(n)
-    # }
+    fill_value <- resolve_aes_value(fill_expr, n)
+    if (!is.null(fill_value)) {
+      d$rect_fill <- fill_value
+    }
+    colour_value <- resolve_aes_value(colour_expr, n)
+    if (!is.null(colour_value)) {
+      d$rect_colour <- colour_value
+    }
     
-    
-    mymapping <- list(
-      d,
-      mapping = aes(
-        xmin = d$x1,
-        xmax = d$x2,
-        ymin = d$y1,
-        ymax = d$y2,
-        alpha = 0.5,
-        fill = eval(args$fill),
-        col = eval(args$col)
-      ),
-      ...
+    mapping_rect <- aes(
+      xmin = x1,
+      xmax = x2,
+      ymin = y1,
+      ymax = y2,
+      alpha = 0.5
     )
-    
-    #mymapping <- list(mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2,alpha=0.5))
-    allmapping <- as.list(structure(as.expression(c(
-      mymapping, usermapping
-    )), class = "uneval"))
+    if (length(usermapping) != 0) {
+      mapping_rect <- structure(c(mapping_rect, usermapping), class = "uneval")
+    }
+    if (!is.null(fill_value)) {
+      mapping_rect$fill <- rlang::expr(.data$rect_fill)
+    }
+    if (!is.null(colour_value)) {
+      mapping_rect$colour <- rlang::expr(.data$rect_colour)
+    }
     
     #ggplot(data=d,aes(x = x1, y = y1))+
     #  do.call(geom_rect,ss)
     
     #start plot
-    ggplot(data = d, aes(x = x1, y = y1)) +
-      do.call(geom_rect, allmapping) +
-      geom_text(label = myRowNames) +
-      guides(colour = FALSE, alpha = FALSE) +
-      labs(x = attr1, y = attr2, fill = "Concepts")
+    base <- ggplot(data = d, aes(x = x1, y = y1)) +
+      geom_rect(mapping = mapping_rect, ...) +
+      guides(colour = "none", alpha = "none") +
+      labs(x = attr1, y = attr2)
+    if (!is.null(fill_value)) {
+      base <- base + labs(fill = rlang::as_label(fill_expr))
+    }
+    
+    if (showLabels) {
+      labelSpec <- switch(
+        labelPosition,
+        topright = list(x = d$x2, y = d$y2, hjust = 0, vjust = 0),
+        topleft = list(x = d$x1, y = d$y2, hjust = 1, vjust = 0),
+        bottomright = list(x = d$x2, y = d$y1, hjust = 0, vjust = 1),
+        bottomleft = list(x = d$x1, y = d$y1, hjust = 1, vjust = 1)
+      )
+      d$label_x <- labelSpec$x + labelNudgeX
+      d$label_y <- labelSpec$y + labelNudgeY
+      d$label_text <- myRowNames
+      base <- base +
+        geom_text(
+          data = d,
+          mapping = aes(
+            x = .data$label_x,
+            y = .data$label_y,
+            label = .data$label_text
+          ),
+          inherit.aes = FALSE,
+          size = labelSize,
+          check_overlap = checkOverlap,
+          hjust = labelSpec$hjust,
+          vjust = labelSpec$vjust
+        )
+    }
+    
+    base
     
   })
 }

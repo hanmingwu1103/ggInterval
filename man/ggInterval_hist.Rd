@@ -18,11 +18,10 @@ it is combined with the default mapping at the top level of
 the plot. You must supply mapping if there is no plot mapping.
 It is the same as the mapping of ggplot2.}
 
-\item{method}{It can be equal-bin(default) or unequal-bin.Enqual-bin means
-the width in histogram is equal, which represent all intervals divided
-have the same range. unequal-bin means the range of intervals are not
-the same,and it can be more general on data. Thus, the bins of unequal-bin
-method depends on the data, and the argument "bins" will be unused.}
+\item{method}{It can be \code{"equal-bin"} (default) or
+\code{"unequal-bin"}. Equal-bin means the histogram uses equally spaced
+intervals. Unequal-bin means the bin widths are determined by the data,
+so the argument \code{bins} is unused in that case.}
 
 \item{bins}{x axis bins,which mean how many partials the variable}
 
@@ -34,7 +33,9 @@ will be separate into.}
 \item{alpha}{fill alpha}
 }
 \value{
-Return a ggplot2 object.
+An object of class \code{ggInterval_hist_result}. A direct call
+displays the histogram, and the returned object stores the ggplot object in
+\code{$plot} together with the accompanying frequency tables.
 }
 \description{
 Visualize the continuous variable distribution
@@ -42,16 +43,13 @@ by dividing the x axis into bins,and calculating the frequency
 of observation interval in each bin.
 }
 \examples{
-ggInterval_hist(mtcars,aes(x=wt))
+mydata <- ggInterval::facedata
+ggInterval_hist(mydata, aes(x = AD), bins = 10)
 
-ggInterval_hist(iris,aes(iris$Petal.Length,col="blue",alpha=0.2,
-   fill="red"),bins=30)
+hist_obj <- ggInterval_hist(mydata, plotAll = TRUE, bins = 10)
+hist_obj
+hist_obj$`Table AD`
 
-
-d<-data.frame(x=rnorm(1000,0,1))
-p<-ggInterval_hist(d,aes(x=x),bins=40,method="equal-bin")$plot
-p
-
-p+scale_fill_manual(values=rainbow(40))+labs(title="myNorm")
+ggInterval_hist(mydata, aes(x = AD), method = "unequal-bin")
 
 }

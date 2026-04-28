@@ -1,8 +1,9 @@
 #' @name ggInterval_indexImage
-#' @title An index plot presented by color image for interval data.
-#' @description Visualize the range of the variables of each observations
-#' by using color image.The index image replace margin bar by color,thus
-#' it will be more visible for data.
+#' @title Index image plot for interval-valued data
+#' @description Visualize interval-valued observations with color strips.
+#' For a single variable, the display acts as a color-based analogue of an
+#' index plot. When \code{plotAll = TRUE}, the function produces a
+#' multivariate image plot across all continuous interval-valued variables.
 #' @import ggplot2 ggthemes
 #' @importFrom RSDA is.sym.interval
 #' @importFrom ggpubr ggarrange
@@ -13,30 +14,31 @@
 #' If specified and inherit. aes = TRUE (the default),
 #' it is combined with the default mapping at the top level of
 #' the plot. You must supply mapping if there is no plot mapping.
-#' @param column_condition Boolean variables, which mean the color
-#' present by column condition (if TRUE) or matrix condition (if FALSE)
-#' @param full_strip Boolean variables, which mean the strip present
-#' in full figure-width (if TRUE) or only in its variable values(if FALSE).
-#' @param plotAll Boolean, which determine if the heatmap type for visualizing
-#' full variables is used. default FALSE.
+#' @param column_condition Logical. If \code{TRUE}, the color scale is
+#' applied separately within each variable (column condition). If
+#' \code{FALSE}, one common color scale is applied to the whole matrix
+#' (matrix condition).
+#' @param full_strip Logical. If \code{TRUE}, each strip spans the full
+#' plotting width. If \code{FALSE}, strip widths reflect the interval ranges.
+#' @param plotAll Logical. If \code{TRUE}, produce a multivariate image plot
+#' for all continuous interval-valued variables. The default is \code{FALSE}.
 #' @return Return a ggplot2 object.
-#' @usage ggInterval_indexImage(data = NULL,mapping = aes(NULL),
-#' column_condition=TRUE,full_strip=FALSE, plotAll = FALSE)
+#' @usage ggInterval_indexImage(data = NULL, mapping = aes(NULL),
+#' column_condition = TRUE, full_strip = FALSE, plotAll = FALSE)
 #' @examples
-#' d<-data.frame(qq=rnorm(1000,0,1))
-#' ggInterval_indexImage(d,aes(qq))
-#'
-#' mydata<-ggInterval::facedata
-#' p<-ggInterval_indexImage(mydata,aes(AD),full_strip=TRUE,column_condition = TRUE)
-#' #Recommend to add coord_flip() to make the plot more visible
-#' p+coord_flip()
-#'
-#' myIris<-classic2sym(iris,groupby="Species")
-#' myIris<-myIris$intervalData
-#' p<-ggInterval_indexImage(myIris,aes(myIris$Petal.Length),full_strip=FALSE,column_condition=TRUE)
-#' p
-#'
-#' ggInterval_indexImage(mtcars,aes(disp))+labs(x="anything")
+#' mydata <- ggInterval::facedata
+#' p <- ggInterval_indexImage(mydata, aes(x = AD),
+#'   full_strip = TRUE, column_condition = TRUE)
+#' # Recommend adding coord_flip() to make the single-variable display clearer.
+#' p + coord_flip()
+#' ggInterval_indexImage(
+#'   mydata,
+#'   plotAll = TRUE,
+#'   full_strip = TRUE,
+#'   column_condition = FALSE
+#' ) +
+#'   scale_colour_distiller(palette = "Blues", direction = 1)
+#' ggInterval_indexImage(mydata, plotAll = TRUE, full_strip = FALSE)
 #'
 #' @export
 ggInterval_indexImage <- function(data = NULL,
@@ -174,7 +176,7 @@ ggInterval_indexImage <- function(data = NULL,
             yend = y,
             color = y
           )) +
-            geom_segment(size = 3) + facet_grid(. ~ group) +
+            geom_segment(linewidth = 3) + facet_grid(. ~ group) +
             eval(parse(text = myColScale)) +
             coord_flip() + scale_x_continuous(breaks = 1:n, label = myHeatMapNames) +
             labs(x = "Concepts", y = "Values") +
@@ -207,7 +209,7 @@ ggInterval_indexImage <- function(data = NULL,
             color = y
           ))
           
-          p <- p + geom_segment(size = 3) +
+          p <- p + geom_segment(linewidth = 3) +
             scale_color_gradient2(
               low = 'blue',
               mid = 'yellow',
@@ -218,7 +220,7 @@ ggInterval_indexImage <- function(data = NULL,
             ) +
             scale_x_continuous(breaks = c(1:n), labels = myHeatMapNames) +
             coord_flip() +
-            guides(fill = F, alpha = F) +
+            guides(fill = "none", alpha = "none") +
             facet_grid(. ~ group) +
             labs(x = "Concepts", y = "") +
             theme(legend.position = "bottom",
@@ -264,7 +266,7 @@ ggInterval_indexImage <- function(data = NULL,
         yend = yend,
         color = y
       )) +
-        geom_segment(size = 3) + eval(parse(text = myColScale)) +
+        geom_segment(linewidth = 3) + eval(parse(text = myColScale)) +
         labs(y = attr,
              x = "",
              title = paste0("Index Image-", NAME)) +
@@ -297,7 +299,7 @@ ggInterval_indexImage <- function(data = NULL,
             yend = y,
             color = value
           )) +
-            geom_segment(size = 3) + facet_grid(. ~ group) +
+            geom_segment(linewidth = 3) + facet_grid(. ~ group) +
             eval(parse(text = myColScale)) +
             coord_flip() + scale_x_continuous(breaks = 1:n, label = myHeatMapNames) +
             labs(x = "Concepts", y = "Values") +
@@ -326,7 +328,7 @@ ggInterval_indexImage <- function(data = NULL,
             color = value
           ))
           
-          p <- p + geom_segment(size = 3) +
+          p <- p + geom_segment(linewidth = 3) +
             scale_color_gradient2(
               low = 'blue',
               mid = 'yellow',
@@ -337,7 +339,7 @@ ggInterval_indexImage <- function(data = NULL,
             ) +
             scale_x_continuous(breaks = c(1:n), labels = myHeatMapNames) +
             coord_flip() +
-            guides(fill = F, alpha = F) +
+            guides(fill = "none", alpha = "none") +
             facet_grid(. ~ group) +
             labs(x = "Concepts", y = "") +
             theme(legend.position = "bottom",
@@ -379,7 +381,7 @@ ggInterval_indexImage <- function(data = NULL,
         yend = y,
         color = value
       )) +
-        geom_segment(size = 3) +
+        geom_segment(linewidth = 3) +
         eval(parse(text = myColScale)) +
         labs(y = attr,
              x = "",
@@ -492,7 +494,7 @@ myplot <- function(tempData,
       )
     )
   }
-  p <- p + geom_segment(size = 3) +
+  p <- p + geom_segment(linewidth = 3) +
     scale_color_gradient2(
       low = 'blue',
       mid = 'yellow',
@@ -504,9 +506,9 @@ myplot <- function(tempData,
          title = paste0("Index Image-", NAME)) +
     scale_x_continuous(breaks = c(1:n), labels = myHeatMapNames) +
     coord_flip() +
-    guides(fill = F,
-           col = F,
-           alpha = F) +
+    guides(fill = "none",
+           col = "none",
+           alpha = "none") +
     theme(plot.title = element_text(hjust = 0.5)) + ggtitle(ele)
   
   if (u != 1) {

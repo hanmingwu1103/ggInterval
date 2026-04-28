@@ -7,6 +7,10 @@
 \format{
 An object of class \code{symbolic_tbl} (inherits from \code{tbl_df}, \code{tbl}, \code{data.frame}) with 8 rows and 4 columns.
 }
+\source{
+Adapted from \code{RSDA::oils}; see
+  \url{https://CRAN.R-project.org/package=RSDA}.
+}
 \usage{
 data(oils)
 }
@@ -20,7 +24,9 @@ ggInterval_scatterplot(oils, aes(x = GRA, y = IOD))
 }
 }
 \references{
-Billard L. and  Diday E. (2006).Symbolic data analysis:
-Conceptual statistics and data mining. Wiley, Chichester.
+Cazes, Pierre; Chouakria, Assia; Diday, Edwin; and
+Schektman, Youri (1997). Extension de l'analyse en composantes principales
+a des donnees de type intervalle. \emph{Revue de Statistique Appliquee},
+45(3), 5--24.
 }
 \keyword{datasets}

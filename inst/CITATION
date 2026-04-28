@@ -1,0 +1,20 @@
+year <- sub("-.*", "", meta$Date)
+
+bibentry(
+  bibtype = "Manual",
+  title = "ggInterval: Visualizing Interval-Valued Data Using 'ggplot2'",
+  author = c(person("Bo-Syue", "Jiang"), person("Han-Ming", "Wu")),
+  year = year,
+  note = paste("R package version", meta$Version),
+  url = "https://CRAN.R-project.org/package=ggInterval",
+  doi = "10.32614/CRAN.package.ggInterval",
+  header = "To cite ggInterval in publications use:",
+  textVersion = paste(
+    "Jiang, Bo-Syue and Wu, Han-Ming",
+    paste0("(", year, ")."),
+    "ggInterval: Visualizing Interval-Valued Data Using 'ggplot2'.",
+    paste("R package version", meta$Version),
+    "https://CRAN.R-project.org/package=ggInterval.",
+    "doi:10.32614/CRAN.package.ggInterval"
+  )
+)

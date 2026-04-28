@@ -32,15 +32,17 @@
 #' ROM2;$I;168.15;172.14;$I;63.13;68.07;.........\cr
 #' ROM3;$I;167.11;171.19;$I;63.13;68.03;.........\cr
 #' @references
-#' Billard L. and  Diday E. (2006).
-#' Symbolic data analysis: Conceptual statistics and data mining. Wiley, Chichester.
+#' Billard, Lynne and Diday, Edwin (2006).
+#' \emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
+#' Chichester, UK: John Wiley and Sons.
 #' @examples
 #' \donttest{
 #' data(facedata)
 #' ggInterval_hist(facedata, aes(x = AD))
 #' }
 #' @keywords datasets
-#' @source \url{https://CRAN.R-project.org/package=RSDA}
+#' @source Adapted from \code{RSDA::facedata}; see
+#'   \url{https://CRAN.R-project.org/package=RSDA}.
 "facedata"
 
 
@@ -48,66 +50,78 @@
 #' @title Cardiological data example
 #' @description Cardiological interval data example.
 #' @usage data(Cardiological)
-#' @references Billard L. and  Diday E. (2006).Symbolic data analysis:
-#' Conceptual statistics and data mining. Wiley, Chichester.
+#' @references Billard, Lynne and Diday, Edwin (2006).
+#' \emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
+#' Chichester, UK: John Wiley and Sons.
 #' @examples
 #' data(Cardiological)
 #' ggInterval_indexplot(Cardiological, aes(x = Syst))
 #' @keywords datasets
-#' @source \url{https://CRAN.R-project.org/package=RSDA}
+#' @source Adapted from \code{RSDA::Cardiological}; see
+#'   \url{https://CRAN.R-project.org/package=RSDA}.
 "Cardiological"
 
 
-#' @name AbaloneIdt
-#' @title AbaloneIdt data example
-#' @description AbaloneIdt interval data example.
-#' @usage data(AbaloneIdt)
-#' @references Billard L. and  Diday E. (2006).Symbolic data analysis:
-#' Conceptual statistics and data mining. Wiley, Chichester.
+#' @name abalone.i
+#' @title abalone.i data example
+#' @description abalone.i interval data example.
+#' @usage data(abalone.i)
 #' @examples
-#' data(AbaloneIdt)
-#' ggInterval_indexplot(AbaloneIdt, aes(x = Length))
+#' data(abalone.i)
+#' ggInterval_indexplot(abalone.i, aes(x = Length))
 #' @keywords datasets
-"AbaloneIdt"
+#' @source Adapted from \code{MAINT.Data::AbaloneIdt}; the underlying
+#'   Abalone data are from the UCI Machine Learning Repository.
+"abalone.i"
 
-#' @name BLOOD
-#' @title BLOOD data example
-#' @description BLOOD interval data example.
-#' @usage data(BLOOD)
-#' @references Billard L. and  Diday E. (2006).Symbolic data analysis:
-#' Conceptual statistics and data mining. Wiley, Chichester.
+#' @name blood.i
+#' @title blood.i data example
+#' @description blood.i interval data example.
+#' @usage data(blood.i)
+#' @references Billard, Lynne and Diday, Edwin (2006).
+#' \emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
+#' Chichester, UK: John Wiley and Sons.
 #' @examples
-#' data(BLOOD)
-#' ggInterval_MMplot(BLOOD, aes(x = Hematocrit))
+#' data(blood.i)
+#' ggInterval_MMplot(blood.i, aes(x = Hematocrit))
 #' @keywords datasets
-"BLOOD"
+#' @source Adapted from \code{HistDAWass::BLOOD}; see
+#'   \url{https://CRAN.R-project.org/package=HistDAWass}.
+"blood.i"
 
 #' @name oils
 #' @title oils data example
 #' @description oils interval data example.
 #' @usage data(oils)
-#' @references Billard L. and  Diday E. (2006).Symbolic data analysis:
-#' Conceptual statistics and data mining. Wiley, Chichester.
+#' @references Cazes, Pierre; Chouakria, Assia; Diday, Edwin; and
+#' Schektman, Youri (1997). Extension de l'analyse en composantes principales
+#' a des donnees de type intervalle. \emph{Revue de Statistique Appliquee},
+#' 45(3), 5--24.
 #' @examples
 #' data(oils)
 #' \donttest{
 #' ggInterval_scatterplot(oils, aes(x = GRA, y = IOD))
 #' }
 #' @keywords datasets
+#' @source Adapted from \code{RSDA::oils}; see
+#'   \url{https://CRAN.R-project.org/package=RSDA}.
 "oils"
 
 #' @name mushroom
 #' @title mushroom data example
 #' @description mushroom interval data example.
 #' @usage data(mushroom)
-#' @references Billard L. and  Diday E. (2006).Symbolic data analysis:
-#' Conceptual statistics and data mining. Wiley, Chichester.
+#' @references Billard, Lynne and Diday, Edwin (2006).
+#' \emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
+#' Chichester, UK: John Wiley and Sons.
 #' @examples
 #' data(mushroom)
 #' \donttest{
 #' ggInterval_scatterplot(mushroom, aes(x = Cap.Widths, y = Stipe.Lengths))
 #' }
 #' @keywords datasets
+#' @source Adapted from \code{RSDA::mushroom}; see
+#'   \url{https://CRAN.R-project.org/package=RSDA}.
 "mushroom"
 
 #' @name Environment
@@ -150,10 +164,13 @@
 #' @title Cardiological data example
 #' @description Cardiological interval data example.
 #' @usage data(Cardiological2)
-#' @references Billard L. and  Diday E. (2006).Symbolic data analysis:
-#' Conceptual statistics and data mining. Wiley, Chichester.
+#' @references Billard, Lynne and Diday, Edwin (2006).
+#' \emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
+#' Chichester, UK: John Wiley and Sons.
 #' @examples
 #' data(Cardiological2)
 #' ggInterval_indexplot(Cardiological2, aes(x = Syst))
 #' @keywords datasets
+#' @source Adapted from \code{RSDA::Cardiological2}; see
+#'   \url{https://CRAN.R-project.org/package=RSDA}.
 "Cardiological2"

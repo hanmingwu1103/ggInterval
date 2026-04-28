@@ -9,17 +9,36 @@
 #' correlation in the presence of missing values. This must be (an abbreviation of)
 #'  one of the strings 'everything', 'all.obs', 'complete.obs', 'na.or.complete',
 #'  or 'pairwise.complete.obs'.
-#' @param method The method to be use.
+#' @param method The method to use.
 #' @param ... As in R cor function.
 #'
-#' @return Return a real number.
+#' @return Return a real number in [-1, 1].
+#' @details
+#' Supported interval-valued methods are:
+#' \itemize{
+#'   \item \code{"centers"}: correlation of interval centers.
+#'   \item \code{"B"}: Billard correlation.
+#'   \item \code{"BD"}: Billard-Diday correlation.
+#'   \item \code{"BG"}: Bertrand-Goupil correlation.
+#' }
+#' For \code{"B"}, \code{"BD"}, and \code{"BG"}, the denominator uses the
+#' corresponding method-matched standard deviation.
 #' @references
-#' Billard L. and  Diday E. (2006).
-#' Symbolic data analysis: Conceptual statistics and data mining. Wiley, Chichester.
+#' Bertrand, Patrice and Goupil, Francoise (2000). Descriptive Statistics for
+#' Symbolic Data. In Hans-Hermann Bock and Edwin Diday (eds.),
+#' \emph{Analysis of Symbolic Data}, pp. 106--124. Berlin and Heidelberg:
+#' Springer.
 #'
-#' Rodriguez, O. (2000).
-#' Classification et Modeles Lineaires en Analyse des Donnees Symboliques. Ph.D. Thesis,
-#' Paris IX-Dauphine University.
+#' Billard, Lynne and Diday, Edwin (2006). \emph{Symbolic Data Analysis:
+#' Conceptual Statistics and Data Mining}. Chichester, UK: John Wiley and Sons.
+#'
+#' Billard, Lynne (2008). Sample covariance functions for complex quantitative
+#' data. In \emph{Proceedings of the World IASC Conference}, pp. 157--163,
+#' Yokohama, Japan.
+#'
+#' Rodriguez-Rojas, Oldemar (2000). \emph{Classification et modeles lineaires
+#' en analyse des donnees symboliques}. PhD thesis, Universite Paris IX
+#' Dauphine.
 #'
 #' @keywords Symbolic correlation
 #' @export
@@ -66,7 +85,7 @@ cor.symbolic_interval <- function(x,
   if (method == "centers") {
     out <- stats::cor((min(x) + max(x)) / 2, (min(y) + max(y)) / 2)
   } else{
-    out <- cov(x, y, method, ...) / (RSDA::sd(x) * RSDA::sd(y))
+    out <- cov(x, y, method, ...) / (sd(x, method = method) * sd(y, method = method))
   }
   return(out)
 }
@@ -84,18 +103,35 @@ cor.symbolic_interval <- function(x,
 #' covariances in the presence of missing values. This must be (an abbreviation of)
 #'  one of the strings 'everything', 'all.obs', 'complete.obs', 'na.or.complete',
 #'  or 'pairwise.complete.obs'.
-#' @param method The method to be use.
+#' @param method The method to use.
 #' @param na.rm As in R cov function.
 #' @param ... As in R cov function.
 #'
 #' @return Return a real number.
+#' @details
+#' Supported interval-valued methods are:
+#' \itemize{
+#'   \item \code{"centers"}: covariance of interval centers.
+#'   \item \code{"B"}: Billard covariance.
+#'   \item \code{"BD"}: Billard-Diday covariance.
+#'   \item \code{"BG"}: Bertrand-Goupil covariance.
+#' }
 #' @references
-#' Billard L. and  Diday E. (2006).
-#' Symbolic data analysis: Conceptual statistics and data mining. Wiley, Chichester.
+#' Bertrand, Patrice and Goupil, Francoise (2000). Descriptive Statistics for
+#' Symbolic Data. In Hans-Hermann Bock and Edwin Diday (eds.),
+#' \emph{Analysis of Symbolic Data}, pp. 106--124. Berlin and Heidelberg:
+#' Springer.
 #'
-#' Rodriguez, O. (2000).
-#' Classification et Modeles Lineaires en Analyse des Donnees Symboliques. Ph.D. Thesis,
-#' Paris IX-Dauphine University.
+#' Billard, Lynne and Diday, Edwin (2006). \emph{Symbolic Data Analysis:
+#' Conceptual Statistics and Data Mining}. Chichester, UK: John Wiley and Sons.
+#'
+#' Billard, Lynne (2008). Sample covariance functions for complex quantitative
+#' data. In \emph{Proceedings of the World IASC Conference}, pp. 157--163,
+#' Yokohama, Japan.
+#'
+#' Rodriguez-Rojas, Oldemar (2000). \emph{Classification et modeles lineaires
+#' en analyse des donnees symboliques}. PhD thesis, Universite Paris IX
+#' Dauphine.
 #'
 #' @keywords Symbolic Covariance
 #' @export
@@ -166,12 +202,12 @@ cov.symbolic_interval <- function(x,
     }
     return((1 / (3 * length(x))) * ss)
   }
-  if (method == "B") {
+  if (method == "BG") {
     a <- sum((min(x) + max(x)) * (min(y) + max(y))) / (4 * m)
     b <- (sum((min(x) + max(x))) * sum((min(y) + max(y)))) / (4 * m^2)
     return(a - b)
   }
-  if (method == "BG") {
+  if (method == "B") {
     x_bar <- mean(x)
     y_bar <- mean(y)
     a <- 2 * (min(x) - x_bar) * (min(y) - y_bar)
@@ -182,6 +218,103 @@ cov.symbolic_interval <- function(x,
   }
 }
 
+
+#' Generic function for the standard deviation
+#' @name sd
+#' @aliases sd
+#' @description This function compute the symbolic standard deviation.
+#' @param x First symbolic variables.
+#' @param method The method to use.
+#' @param na.rm As in R sd function.
+#' @param ... As in R sd function.
+#'
+#' @return Return a real number.
+#' @details
+#' Supported interval-valued methods are:
+#' \itemize{
+#'   \item \code{"billard"}: standard deviation based on the Billard
+#'   univariate variance formula.
+#'   \item \code{"centers"}: standard deviation of interval centers.
+#'   \item \code{"interval"}: interval-valued standard deviation obtained by
+#'   standardizing lower and upper bounds separately.
+#'   \item \code{"B"}: method-matched standard deviation defined by
+#'   \eqn{\sqrt{C_B(X, X)}}.
+#'   \item \code{"BD"}: method-matched standard deviation defined by
+#'   \eqn{\sqrt{C_{BD}(X, X)}}.
+#'   \item \code{"BG"}: method-matched standard deviation defined by
+#'   \eqn{\sqrt{C_{BG}(X, X)}}.
+#' }
+#' @references
+#' Bertrand, Patrice and Goupil, Francoise (2000). Descriptive Statistics for
+#' Symbolic Data. In Hans-Hermann Bock and Edwin Diday (eds.),
+#' \emph{Analysis of Symbolic Data}, pp. 106--124. Berlin and Heidelberg:
+#' Springer.
+#'
+#' Billard, Lynne and Diday, Edwin (2006). \emph{Symbolic Data Analysis:
+#' Conceptual Statistics and Data Mining}. Chichester, UK: John Wiley and Sons.
+#'
+#' Billard, Lynne (2008). Sample covariance functions for complex quantitative
+#' data. In \emph{Proceedings of the World IASC Conference}, pp. 157--163,
+#' Yokohama, Japan.
+#'
+#' @keywords Symbolic standard deviation
+#' @export
+sd <- function(x, ...) {
+  UseMethod("sd", x)
+}
+
+#' @rdname sd
+#' @export
+sd.default <- function(x, na.rm = FALSE, ...) {
+  stats::sd(x, na.rm = na.rm, ...)
+}
+
+#' @rdname sd
+#' @export
+sd.symbolic_tbl <- function(x,
+                            method = c("billard", "centers", "interval", "B", "BD", "BG"),
+                            na.rm = FALSE,
+                            ...) {
+  method <- match.arg(method)
+  out <- lapply(seq_len(ncol(x)), function(i) {
+    col <- x[[i]]
+    if (RSDA::is.sym.interval(col)) {
+      sd(col, method = method, na.rm = na.rm, ...)
+    } else if (is.numeric(col)) {
+      stats::sd(col, na.rm = na.rm, ...)
+    } else {
+      NA_real_
+    }
+  })
+  names(out) <- colnames(x)
+  tibble::as_tibble(out)
+}
+
+#' @rdname sd
+#' @export
+sd.symbolic_interval <- function(x,
+                                 method = c("billard", "centers", "interval", "B", "BD", "BG"),
+                                 na.rm = FALSE,
+                                 ...) {
+  method <- match.arg(method)
+  if (method == "centers") {
+    out <- stats::sd((min(x) + max(x)) / 2, na.rm = na.rm)
+    return(out)
+  }
+  if (method == "interval") {
+    out <- utils::getFromNamespace("new.sym.intreval", "RSDA")(
+      stats::sd(min(x), na.rm = na.rm),
+      stats::sd(max(x), na.rm = na.rm)
+    )
+    return(out)
+  }
+  if (method == "BG") {
+    return(sqrt(cov(x, x, method = "BG", na.rm = na.rm, ...)))
+  }
+  out <- sqrt((1 / (3 * length(x))) * sum(min(x)^2 + (min(x) * max(x)) + max(x)^2) -
+                (1 / (4 * (length(x))^2)) * sum(min(x) + max(x))^2)
+  return(out)
+}
 
 
 #' @name RSDA2sym
@@ -199,7 +332,7 @@ cov.symbolic_interval <- function(x,
 #' @param rawData rawData, which can be transformed to interval data,
 #' must be a data frame and match to data.
 #' @return Return an object of class "ggInterval", which
-#' have a interval data and others as follows.
+#' has interval-valued data and related outputs as follows.
 #' \itemize{
 #'   \item intervalData - The Interval data after converting also known
 #'   as a RSDA object.

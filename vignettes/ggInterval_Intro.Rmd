@@ -1,10 +1,10 @@
 ---
 title: "Introduction to ggInterval"
-subtitle: "Visualizing Interval-Valued Data using ggplot2"
+subtitle: "A source-portable companion for interval-valued visualization"
 author: "Bo-Syue Jiang and Han-Ming Wu"
 date: "`r Sys.Date()`"
 output:
-  rmarkdown::html_document:
+  rmarkdown::html_vignette:
     toc: true
     toc_depth: 3
     number_sections: true
@@ -16,401 +16,453 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 7,
+  fig.height = 5,
+  out.width = "100%"
 )
-```
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(warning = FALSE)
-knitr::opts_chunk$set(message = FALSE)
-knitr::opts_chunk$set(out.width = "100%")
-knitr::opts_chunk$set(fig.align = "center")
-library(knitr)
 library(ggInterval)
-library(RSDA)
+library(ggplot2)
 ```
 
-# Introduction
+# Overview
 
-Exploratory data analysis (EDA) relies on graphical summaries---boxplots,
-histograms, scatter plots---to reveal a dataset's salient features before
-formal modeling. Yet modern data are increasingly recorded not as single
-scalar values but as *intervals*, *histograms*, or full empirical
-distributions. These richer objects are collectively known as **symbolic
-data** (Billard and Diday, 2006). For example, when individual-level
-measurements are aggregated by group, each variable naturally becomes an
-interval $[a, b]$ rather than a point value.
+`ggInterval` extends `ggplot2` for interval-valued data. The package supports
+visualizations such as scatter plots, histograms, index plots, radar plots,
+line plots, PCA displays, and correlation heatmaps, while keeping the
+layered grammar familiar to `ggplot2` users.
 
-Conventional R graphics cannot natively accommodate interval-valued
-observations. **ggInterval** (formerly **ggESDA**) bridges this gap by
-extending the **ggplot2** framework to visualize interval-valued symbolic
-data. The package provides a family of plot functions with a uniform
-interface:
+This vignette focuses on source-portable examples that can be rebuilt directly
+from the package. It uses built-in data, the bundled `data.csv` file for the
+aggregation example, and optional sections for packages such as `HistDAWass`
+and `MAINT.Data`.
 
-```r
-ggInterval_<GRAPH_TYPE>(data, mapping = aes(...), ...)
-```
+# Built-in Data
 
-where `data` is a symbolic data object and `mapping` uses the standard
-`ggplot2::aes()` syntax. Because most plot functions return `ggplot2`
-objects, users can freely add themes, scales, labels, and additional layers.
-
-# Data Preparation
-
-## Built-in datasets
-
-The package ships with several symbolic datasets. The most commonly used
-are:
-
-- **`facedata`** -- 24 faces (8 ethnic groups $\times$ 3 replicates) with 6
-  interval-valued facial measurements (AD, BC, AH, GH, EH, BG).
-- **`Environment`** -- 14 cities described by 17 variables, including both
-  interval-valued and modal multi-valued variables.
-- **`oils`** -- 8 types of oils with 4 interval-valued chemical properties.
-
-```{r data-facedata}
+```{r built_in_data}
 data(facedata)
+data(Environment)
+
 facedata
+Environment
+
+Subjects <- substr(rownames(facedata), 1, 3)
+Subjects
 ```
 
-```{r data-summary}
-summary(facedata)
+# Basic Usage
+
+```{r ggplot2_workflow}
+ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point() +
+  scale_color_manual(values = c("red", "blue", "goldenrod"))
+
+ggInterval_scatterplot(
+  facedata,
+  aes(x = AD, y = BC, fill = Subjects),
+  col = "black"
+) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(fill = "Subjects")
 ```
 
-## Converting classical data with `classic2sym`
+# Aggregating Classical Data into Interval-Valued Data
 
-Classical (scalar) data can be converted to symbolic interval data by
-aggregating within groups. The `classic2sym()` function supports several
-grouping strategies:
+```{r aggregation_examples}
+breastData <- read.csv("data.csv")
+breastData$X <- NULL
+breastData <- dplyr::select(breastData, -id)
 
-```{r classic2sym-species}
-myIris <- classic2sym(iris, groupby = "Species")
-myIris$intervalData
-```
+breastData_kmeans <- classic2sym(breastData, groupby = "kmeans", k = 5)
+head(breastData_kmeans$intervalData[, 1:4])
 
-The `groupby` argument accepts:
-
-- A column name (factor variable) in the data, e.g. `"Species"`.
-- `"kmeans"` or `"hclust"` for unsupervised clustering (with `k` groups).
-- `"customize"` for user-supplied minimum and maximum data frames.
-
-```{r classic2sym-kmeans}
-myIris_km <- classic2sym(iris, groupby = "kmeans", k = 5)
-myIris_km$intervalData
-```
-
-## Converting RSDA objects with `RSDA2sym`
-
-If you already have an RSDA `symbolic_tbl` object, wrap it with `RSDA2sym()`
-so it can be used with all ggInterval plot functions:
-
-```{r rsda2sym, eval = FALSE}
-mySym <- RSDA2sym(Cardiological)
-mySym$intervalData
+breastData_diag <- classic2sym(breastData, groupby = "diagnosis")
+head(breastData_diag$intervalData[, 1:4])
 ```
 
 # Descriptive Statistics
 
-ggInterval provides S3 methods for common statistical summaries on symbolic
-interval data.
+```{r descriptive_statistics}
+mean(facedata)
+sd(facedata)
 
-## Summary statistics
+cov(facedata$AD, facedata$BC, method = "BD")
+cor(facedata$AD, facedata$BC, method = "BD")
 
-`summary()` reports the minimum, quartiles, median, mean, maximum, and
-standard deviation for each interval-valued variable:
-
-```{r stat-summary}
-summary(facedata)
-```
-
-## Correlation and covariance
-
-`cor()` and `cov()` compute association matrices. Several methods are
-available for interval data, including `"centers"`, `"B"` (Billard),
-`"BD"` (Billard--Diday), and `"BG"` (Billard--Greco):
-
-```{r stat-cor}
-cor(facedata)
-```
-
-```{r stat-cov}
-cov(facedata)
-```
-
-## Standardization
-
-`scale()` standardizes symbolic interval data (centering and scaling),
-which can be useful before multivariate analyses:
-
-```{r stat-scale}
-facedata_scaled <- scale(facedata)
-facedata_scaled
+summary(facedata$AD)
+summary(Environment[1:3, ])
 ```
 
 # Univariate Plots
 
-## Index plot
+## Index Plots and Index Images
 
-`ggInterval_indexplot()` displays the interval range of each observation as
-a vertical bar. This is useful for spotting outliers and comparing spreads
-across observations.
-
-```{r indexplot, fig.width = 7, fig.height = 4}
+```{r index_plots}
 ggInterval_indexplot(facedata, aes(x = AD))
-```
 
-## Index image
+ggInterval_indexplot(facedata, aes(x = AD, fill = Subjects)) +
+  scale_fill_brewer(palette = "Set1") +
+  geom_vline(xintercept = mean(facedata$AD), color = "darkgray") +
+  labs(fill = "Subjects")
 
-`ggInterval_indexImage()` replaces the margin bars of the index plot with a
-color-coded strip. The `column_condition` parameter controls whether colors
-represent column-wise or matrix-wise conditions, and `full_strip` expands
-the color strip to the full figure width.
+ggInterval_indexImage(facedata, aes(x = AD)) +
+  coord_flip()
 
-```{r indeximage-col, fig.width = 7, fig.height = 4}
-ggInterval_indexImage(facedata, aes(AD),
-                      column_condition = TRUE, full_strip = FALSE)
-```
-
-```{r indeximage-full, fig.width = 7, fig.height = 4}
-ggInterval_indexImage(facedata, aes(AD),
-                      column_condition = TRUE, full_strip = TRUE) +
+ggInterval_indexImage(facedata, aes(x = AD), full_strip = TRUE) +
   coord_flip()
 ```
 
-## Boxplot
+```{r index_plot_ordering}
+face.ip <- ggInterval_indexplot(facedata, aes(fill = Subjects), plotAll = TRUE) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(x = "", y = "", fill = "Subjects")
+face.ip
 
-`ggInterval_boxplot()` draws an interval-valued box plot, where each
-observation's interval is represented by nested rectangles showing the
-distribution of the interval endpoints. Use `plotAll = TRUE` to display all
-variables side by side.
+b <- ggInterval_indexplot(facedata, aes(fill = Subjects),
+  plotAll = TRUE, row_order = "c") +
+  scale_fill_brewer(palette = "Set1") +
+  labs(x = "", y = "", fill = "Subjects")
+b
 
-```{r boxplot-single, fig.width = 7, fig.height = 4}
-ggInterval_boxplot(facedata, aes(AD))
+cc <- ggInterval_indexplot(facedata, aes(fill = Subjects),
+  plotAll = TRUE, row_order = "r") +
+  scale_fill_brewer(palette = "Set1") +
+  labs(x = "", y = "", fill = "Subjects")
+cc
 ```
 
-```{r boxplot-all, fig.width = 7, fig.height = 5}
-ggInterval_boxplot(facedata, plotAll = TRUE)
+In the ordered `plotAll` displays, the outer y-axis labels are suppressed by
+default. Here `row_order = "c"` reorders observations by interval centers
+within each variable panel, while `row_order = "r"` reorders them by interval
+ranges within each variable panel. Set `labels = TRUE` if you want the row
+labels repeated inside each variable panel.
+
+## Boxplots and Histograms
+
+```{r boxplots_histograms}
+ggInterval_boxplot(facedata, aes(x = AD), width_type = "violin-like")
+
+ggInterval_boxplot(facedata, aes(x = AD), width_type = "quantile-depth")
+
+ggInterval_boxplot(facedata, aes(x = AD), width_type = "side-by-side")
+
+ggInterval_hist(facedata, aes(x = AD), method = "equal-bin", bins = 10)
+
+ggInterval_hist(facedata, aes(x = AD), method = "unequal-bin")
 ```
 
-## Histogram
+## Line Plot
 
-`ggInterval_hist()` constructs a histogram from interval-valued data. Two
-binning strategies are supported:
+```{r lineplot_stocklike}
+if (!requireNamespace("TTR", quietly = TRUE)) {
+  stop("Package 'TTR' is required for this example.")
+}
 
-- `method = "equal-bin"` (default): bins of equal width.
-- `method = "unequal-bin"`: bin boundaries depend on the data distribution.
+data("ttrc", package = "TTR")
+stock.data <- subset(
+  ttrc[, c("Date", "Close", "Low", "High")],
+  format(Date, "%Y-%m") %in% c("1985-01", "1985-02", "1985-03")
+)
+stock.data$Month <- factor(
+  month.abb[as.integer(format(stock.data$Date, "%m"))],
+  levels = month.abb[1:3]
+)
+stock.data$Day <- as.integer(format(stock.data$Date, "%d"))
 
-Note that `ggInterval_hist()` returns a list; use `$plot` to extract the
-`ggplot2` object.
+stock.data.LH <- classic2sym(
+  stock.data,
+  groupby = "customize",
+  minData = stock.data$Low,
+  maxData = stock.data$High
+)
 
-```{r hist-equal, fig.width = 7, fig.height = 4}
-ggInterval_hist(facedata, aes(x = AD), bins = 10,
-                method = "equal-bin")$plot
+ggInterval_lineplot(stock.data.LH, aes(y = V1, x = Day), barWidth = 0.6) +
+  geom_point(aes(y = Close), shape = 21, fill = "#D95F02",
+             color = "black", size = 1.6, stroke = 0.2) +
+  coord_cartesian(xlim = c(1, 31), expand = FALSE) +
+  facet_wrap(~Month, ncol = 1, scales = "free_y") +
+  scale_x_continuous(breaks = c(1, 8, 15, 22, 29)) +
+  labs(x = "Day of month", y = "Price") +
+  ggthemes::theme_economist() +
+  theme(strip.text = element_text(face = "bold"))
 ```
 
-```{r hist-unequal, fig.width = 7, fig.height = 4}
-ggInterval_hist(facedata, aes(x = AD),
-                method = "unequal-bin")$plot
+## Min-Max Plot
+
+```{r minmax_plot}
+mm.plot <- function(x) {
+  plot.var <<- names(facedata)[x]
+  ggInterval_MMplot(facedata, aes(facedata[[plot.var]], size = 2)) +
+    coord_fixed(ratio = 1) +
+    theme(legend.position = "none")
+}
+
+mm.plot.list <- lapply(seq_along(facedata), mm.plot)
+gridExtra::marrangeGrob(mm.plot.list, nrow = 2, ncol = 3, top = "")
 ```
 
-## Min-max plot
+## Center-Range Plot
 
-`ggInterval_MMplot()` marks the minimum and maximum endpoints of each
-observation's interval, connected by a line segment. This makes it easy to
-compare ranges across observations.
+```{r centerrange_plot}
+ggInterval_CRplot(facedata, aes(size = 1.5), plotAll = TRUE)
 
-```{r mmplot, fig.width = 7, fig.height = 4}
-ggInterval_MMplot(facedata, aes(AD))
-```
-
-Use `plotAll = TRUE` to display all variables together:
-
-```{r mmplot-all, fig.width = 7, fig.height = 5}
-ggInterval_MMplot(facedata, plotAll = TRUE)
-```
-
-## Center-range plot
-
-`ggInterval_CRplot()` plots each observation as a point in a two-dimensional
-space where the x-axis is the center (midpoint) of the interval and the
-y-axis is the range (spread).
-
-```{r crplot, fig.width = 7, fig.height = 4}
-ggInterval_CRplot(facedata, aes(AD))
-```
-
-```{r crplot-all, fig.width = 7, fig.height = 5}
-ggInterval_CRplot(facedata, plotAll = TRUE)
+facedata.scale <- scale(facedata)$intervalData
+ggInterval_CRplot(facedata.scale, aes(size = 1.5), plotAll = TRUE)
 ```
 
 # Bivariate Plots
 
-## Scatter plot
+## Scatter Plot with Label Controls
 
-`ggInterval_scatterplot()` visualizes two interval-valued variables
-simultaneously. Each observation is drawn as a rectangle whose width and
-height represent the intervals on the x- and y-axes, respectively.
-
-```{r scatterplot, fig.width = 7, fig.height = 5}
-ggInterval_scatterplot(facedata, aes(x = AD, y = BC))
+```{r scatterplot_labels}
+ggInterval_scatterplot(
+  facedata,
+  aes(x = BC, y = AD, fill = Subjects),
+  showLabels = TRUE,
+  labelSize = 2.6,
+  labelPosition = "topright",
+  labelNudgeX = -0.2,
+  labelNudgeY = 0.15,
+  checkOverlap = FALSE,
+  color = "black"
+) +
+  scale_fill_brewer(palette = "Set1") +
+  scale_x_continuous(expand = expansion(mult = c(0.08, 0.12))) +
+  scale_y_continuous(expand = expansion(mult = c(0.06, 0.10))) +
+  labs(fill = "Subjects")
 ```
 
-## 2D histogram
+## 2D Histograms
 
-`ggInterval_2Dhist()` partitions the bivariate domain into a grid and counts
-how many interval observations overlap each cell. The `xBins` and `yBins`
-parameters control the grid resolution.
+```{r hist2d_equal}
+face.2dh.equal <- ggInterval_2Dhist(
+  facedata,
+  aes(x = BC, y = AD, col = "white"),
+  method = "equal-bin",
+  xBins = 10,
+  yBins = 10,
+  display = "p",
+  palette = "Blues",
+  direction = 1,
+  cell_labels = TRUE
+)$plot
 
-```{r hist2d, fig.width = 7, fig.height = 5}
-ggInterval_2Dhist(facedata, aes(x = AD, y = BC), xBins = 10, yBins = 10)
+face.2dh.equal +
+  coord_fixed(ratio = 1)
 ```
 
-Here is the same plot for the `oils` dataset:
+```{r hist2d_unequal}
+face.2dh.unequal <- ggInterval_2Dhist(
+  facedata,
+  aes(x = BC, y = AD, col = "white"),
+  method = "unequal-bin",
+  display = "p",
+  palette = "Blues",
+  direction = 1,
+  tau = 0.5
+)$plot
 
-```{r hist2d-oils, fig.width = 7, fig.height = 5}
-data(oils)
-ggInterval_2Dhist(oils, aes(x = GRA, y = FRE), xBins = 5, yBins = 5)
+face.2dh.unequal +
+  coord_fixed(ratio = 1)
 ```
 
-# Multivariate Plots
+# Matrix Displays
 
-## Scatter plot matrix
+## Scatter Matrix
 
-`ggInterval_scatterMatrix()` produces a pairwise scatter plot matrix for all
-continuous interval variables in the dataset. Note that this function returns
-a `marrangeGrob` object (from **gridExtra**), not a `ggplot2` object.
-
-```{r scattermatrix, fig.width = 8, fig.height = 8}
-ggInterval_scatterMatrix(facedata[, 1:3])
+```{r scatter_matrix}
+ggInterval_scatterMatrix(facedata, aes(fill = "steelblue", alpha = 0.3))
 ```
 
-## 2D histogram matrix
+## 2D Histogram Matrices
 
-`ggInterval_2DhistMatrix()` is the matrix analogue of `ggInterval_2Dhist()`,
-showing 2D histograms for all variable pairs.
-
-```{r histmatrix, fig.width = 8, fig.height = 8}
-ggInterval_2DhistMatrix(oils, xBins = 5, yBins = 5)
+```{r hist2d_matrix_equal}
+ggInterval_2DhistMatrix(
+  facedata,
+  aes(col = "white"),
+  method = "equal-bin",
+  xBins = 10,
+  yBins = 10,
+  display = "p",
+  palette = "Blues",
+  direction = 1,
+  cell_labels = TRUE
+)
 ```
 
-## Index image heatmap
-
-When `plotAll = TRUE`, `ggInterval_indexImage()` produces a heatmap-style
-visualization across all variables, providing an overview of the entire
-dataset.
-
-```{r indeximage-heatmap, fig.width = 8, fig.height = 5}
-ggInterval_indexImage(facedata, plotAll = TRUE)
+```{r hist2d_matrix_unequal}
+ggInterval_2DhistMatrix(
+  facedata,
+  aes(col = "white"),
+  method = "unequal-bin",
+  display = "p",
+  palette = "Blues",
+  direction = 1,
+  cell_labels = TRUE,
+  tau = 0.5
+)
 ```
 
-## Radar plot
+## Image Plots
 
-`ggInterval_radarplot()` displays multiple interval-valued variables on
-radial axes. Each observation is represented by a polygon (or rectangle)
-whose extent along each axis shows the interval range. The `plotPartial`
-argument selects which observations to display.
+```{r image_plots}
+ggInterval_indexImage(
+  facedata,
+  plotAll = TRUE,
+  full_strip = TRUE,
+  column_condition = FALSE
+) +
+  scale_colour_distiller(palette = "Blues", direction = 1)
 
-```{r radar-polygon, fig.width = 7, fig.height = 6}
-data(Environment)
-ggInterval_radarplot(Environment[, 5:17],
-                     plotPartial = 2,
-                     showLegend = FALSE,
-                     base_circle = TRUE,
-                     base_lty = 2,
-                     addText = FALSE) +
-  labs(title = "Environment: radar plot (default)")
+ggInterval_indexImage(
+  facedata,
+  plotAll = TRUE,
+  full_strip = FALSE
+) +
+  scale_colour_distiller(palette = "Spectral")
 ```
 
-The `type = "rect"` variant draws rectangles instead of polygons:
+## Radar Plots
 
-```{r radar-rect, fig.width = 7, fig.height = 6}
-ggInterval_radarplot(Environment[, 5:17],
-                     plotPartial = 2,
-                     type = "rect",
-                     showLegend = FALSE,
-                     base_circle = TRUE,
-                     addText = FALSE) +
-  labs(title = "Environment: radar plot (rect)")
+```{r radar_plots}
+library(ggthemes)
+
+ggInterval_radarplot(
+  Environment,
+  plotPartial = c(4, 6),
+  showLegend = FALSE,
+  base_circle = FALSE,
+  base_lty = 1,
+  addText = FALSE,
+  addText_modal = FALSE
+) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+  scale_color_manual(values = c("darkred", "darkblue")) +
+  labs(title = "") +
+  theme_hc()
+
+ggInterval_radarplot(
+  Environment,
+  plotPartial = c(4, 6),
+  showLegend = FALSE,
+  base_circle = FALSE,
+  base_lty = 1,
+  addText = FALSE,
+  addText_modal = FALSE,
+  type = "rect"
+) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+  scale_color_manual(values = c("darkred", "darkblue")) +
+  labs(title = "") +
+  theme_hc()
+
+ggInterval_radarplot(
+  facedata,
+  base_circle = FALSE,
+  base_lty = 1,
+  type = "quantile",
+  quantileNum = 5,
+  showLegend = TRUE,
+  Drift = 0
+) +
+  scale_fill_brewer(palette = "Greys") +
+  labs(title = "", fill = "Quantiles") +
+  theme_hc()
 ```
 
-## 3D scatter plot
+# Customization
 
-`ggInterval_3Dscatterplot()` visualizes three interval-valued variables,
-rendering each observation as a cube-like shape projected into two
-dimensions.
-
-```{r scatter3d, fig.width = 7, fig.height = 6}
-ggInterval_3Dscatterplot(facedata[1:5, ], aes(x = BC, y = EH, z = GH))
-```
-
-# Principal Component Analysis
-
-`ggInterval_PCA()` performs vertices-based PCA on interval-valued data. Each
-interval observation is expanded to its vertices (all $2^p$ corner
-combinations), PCA is applied, and the results are projected back to
-interval form.
-
-```{r pca, fig.width = 7, fig.height = 5}
-pca_result <- ggInterval_PCA(facedata, plot = FALSE)
-pca_result$ggplotPCA
-```
-
-Setting `poly = TRUE` adds a convex-hull polygon connecting the projected
-vertices for each observation:
-
-```{r pca-poly, fig.width = 7, fig.height = 5}
-pca_poly <- ggInterval_PCA(facedata, poly = TRUE, plot = FALSE)
-pca_poly$ggplotPCA
-```
-
-PCA also works with classical data via automatic conversion:
-
-```{r pca-iris, fig.width = 7, fig.height = 5}
+```{r customization_examples}
 myIris <- classic2sym(iris, groupby = "Species")
-pca_iris <- ggInterval_PCA(myIris, plot = FALSE)
-pca_iris$ggplotPCA
+
+ggInterval_indexplot(myIris$intervalData, aes(x = Sepal.Length, fill = "steelblue")) +
+  labs(title = "Customized Index Plot using K-Means Results", fill = "Species") +
+  theme_minimal()
 ```
 
-# Working with ggplot2
+# Working with Other SDA Packages
 
-Because most ggInterval functions return standard `ggplot2` objects, you can
-customize plots with the full range of ggplot2 features.
+## Histogram-Valued Data via HistDAWass
 
-**Themes and labels:**
+This example is evaluated only when the optional package `HistDAWass` is
+installed.
 
-```{r ggplot2-theme, fig.width = 7, fig.height = 4}
-ggInterval_indexplot(facedata, aes(x = AD)) +
-  theme_minimal() +
-  labs(title = "Index plot of AD", x = "Observation", y = "AD")
+```{r histdawass_example, eval = requireNamespace("HistDAWass", quietly = TRUE)}
+BLOOD <- HistDAWass::BLOOD
+blood.min <- HistDAWass::get.MatH.stats(BLOOD, stat = "min")
+blood.max <- HistDAWass::get.MatH.stats(BLOOD, stat = "max")
+blood <- data.frame(blood.min, blood.max)
+
+myBLOOD <- classic2sym(
+  blood,
+  groupby = "customize",
+  minData = blood[, 2:4],
+  maxData = blood[, 6:8]
+)
+
+colnames(myBLOOD$intervalData) <- HistDAWass::get.MatH.main.info(BLOOD)$varnames
+ggInterval_PCA(myBLOOD$intervalData, plot = FALSE)$ggplotPCA
 ```
 
-**Custom color scales:**
+## Midpoint-Range Data via MAINT.Data
 
-```{r ggplot2-scale, fig.width = 7, fig.height = 4}
-p <- ggInterval_hist(facedata, aes(x = AD), bins = 10,
-                     method = "equal-bin")$plot
-p + scale_fill_manual(values = rainbow(10))
+This example is evaluated only when the optional package `MAINT.Data` is
+installed.
+
+```{r maint_data_example, eval = requireNamespace("MAINT.Data", quietly = TRUE)}
+AbaloneIdt <- MAINT.Data::AbaloneIdt
+
+AbaloneRange <- exp(AbaloneIdt@LogR)
+AbaloneMid <- AbaloneIdt@MidP
+AbaloneBounds <- data.frame(
+  AbaloneMid - AbaloneRange / 2,
+  AbaloneMid + AbaloneRange / 2
+)
+
+myAbalone <- classic2sym(
+  AbaloneBounds,
+  groupby = "customize",
+  minData = AbaloneBounds[, 1:7],
+  maxData = AbaloneBounds[, 8:14]
+)
+
+colnames(myAbalone$intervalData) <- AbaloneIdt@VarNames
+ggInterval_PCA(myAbalone$intervalData, plot = FALSE)$ggplotPCA
 ```
 
-**Adding reference lines:**
+# PCA and Correlation Heatmaps
 
-```{r ggplot2-ref, fig.width = 7, fig.height = 4}
-ggInterval_CRplot(facedata, aes(AD)) +
-  geom_hline(yintercept = 5, linetype = "dashed", color = "red")
+```{r pca_example}
+ggInterval_PCA(
+  facedata,
+  concepts_group = Subjects,
+  showLabels = TRUE,
+  labelSize = 3,
+  checkOverlap = TRUE
+)$ggplotPCA +
+  scale_fill_brewer(palette = "Set1") +
+  coord_fixed(ratio = 1)
 ```
 
-Note that `ggInterval_scatterMatrix()` returns a `marrangeGrob` object, so
-ggplot2 `+` operators cannot be applied to it directly.
+```{r corrplot_example}
+ggInterval_corrplot(facedata, method = "BG", triangle = "lower")
+```
 
-# References
+# Citation
 
-- Billard, L. and Diday, E. (2006). *Symbolic Data Analysis: Conceptual
-  Statistics and Data Mining*. Wiley, Chichester.
+Use `citation("ggInterval")` after installation to retrieve the current
+package citation metadata.
 
-- Jiang, B.S. and Wu, H.M. (2025). ggInterval: an R package for visualizing
-  interval-valued data using ggplot2. *R package version 0.2.3*,
-  <https://CRAN.R-project.org/package=ggInterval>.
+# Session Information
+
+```{r session_info}
+sessionInfo()
+```

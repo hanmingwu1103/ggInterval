@@ -1,8 +1,8 @@
 #' @name ggInterval_PCA
-#' @title Vertice-PCA for interval data
+#' @title Vertices PCA for interval data
 #' @description ggInterval_PCA performs a principal components
 #' analysis on the given numeric interval data and returns the
-#' results like princomp, ggplot object and a interval scores.
+#' results of princomp, a ggplot object, and interval scores.
 #' @import rlang ggplot2 stats
 #' @importFrom RSDA is.sym.interval
 #' @importFrom gtools odd
@@ -19,7 +19,11 @@
 #' @param concepts_group color with each group of concept
 #' @param poly if plot a poly result
 #' @param adjust adjust sign of the principal component
-#' @return A ggplot object for PC1,PC2,and a interval scores and others.
+#' @param showLabels Logical. If \code{TRUE}, label interval scores in the plot.
+#' @param labelSize Numeric text size used when \code{showLabels = TRUE}.
+#' @param checkOverlap Logical. Passed to \code{geom_text()} to suppress
+#' overlapping labels when needed.
+#' @return A ggplot object for PC1, PC2, and interval scores with related outputs.
 #' \itemize{
 #'   \item scores_interval - The interval scores after PCA.
 #'   \item ggplotPCA - a ggplot object with x-axis and y-axis are PC1 and
@@ -27,21 +31,17 @@
 #'   \item others - others are the returns values of princomp.
 #' }
 #' @usage ggInterval_PCA(data = NULL,mapping = aes(NULL),plot=TRUE,
-#'                       concepts_group=NULL, poly = FALSE, adjust = TRUE)
+#'                       concepts_group=NULL, poly = FALSE, adjust = TRUE,
+#'                       showLabels = TRUE, labelSize = 3,
+#'                       checkOverlap = FALSE)
 #' @examples
-#' ggInterval_PCA(iris)
-#'
-#' mydata2<-ggInterval::Cardiological
-#' ggInterval_PCA(mydata2,aes(col="red",alpha=0.2))
-#'
-#' d<-mapply(c(10,20,40,80,160),c(20,40,80,160,320),FUN=runif,n=1000)
-#' d<-data.frame(qq=matrix(d,ncol=4))
-#' ggInterval_PCA(d)
-#'
-#' myIris<-classic2sym(iris,"Species")
-#' p<-ggInterval_PCA(myIris,plot=FALSE)
+#' \donttest{
+#' Subjects <- substr(rownames(facedata), 1, 3)
+#' p <- ggInterval_PCA(facedata, plot = FALSE, concepts_group = Subjects)
 #' p$ggplotPCA
 #' p$scores_interval
+#' ggInterval_PCA(facedata, poly = TRUE, concepts_group = Subjects)
+#' }
 #'
 #' @export
 ggInterval_PCA <- function(data = NULL,
@@ -49,7 +49,10 @@ ggInterval_PCA <- function(data = NULL,
                            plot = TRUE,
                            concepts_group = NULL,
                            poly = FALSE,
-                           adjust = TRUE) {
+                           adjust = TRUE,
+                           showLabels = TRUE,
+                           labelSize = 3,
+                           checkOverlap = FALSE) {
   #data preparing
   argsNum <- length(mapping)
   args <- lapply(mapping[1:argsNum], FUN = rlang::get_expr)
@@ -173,6 +176,7 @@ ggInterval_PCA <- function(data = NULL,
   mypca$scores_interval[, "rowname"] <- rownames(iData)
   mypca$scores_interval <- tibble::column_to_rownames(mypca$scores_interval, var = "rowname")
   class(mypca$scores_interval) <- c(class(mypca$scores_interval), "symbolic_tbl")
+  PCscores_interval$rowname_label <- myRowNames
   #蝑??ㄐ ?隞半uild rownames ????rownames??絲靘??
   #build Aesthetic (mapping)
   if (!poly) {
@@ -182,10 +186,10 @@ ggInterval_PCA <- function(data = NULL,
       mymapping <- list(
         PCscores_interval,
         mapping = aes(
-          xmin = PCscores_interval$PC1.min,
-          xmax = PCscores_interval$PC1.max,
-          ymin = PCscores_interval$PC2.min,
-          ymax = PCscores_interval$PC2.max,
+          xmin = .data$PC1.min,
+          xmax = .data$PC1.max,
+          ymin = .data$PC2.min,
+          ymax = .data$PC2.max,
           fill = concepts_group,
           alpha = 0.5
         ),
@@ -195,10 +199,10 @@ ggInterval_PCA <- function(data = NULL,
       mymapping <- list(
         PCscores_interval,
         mapping = aes(
-          xmin = PCscores_interval$PC1.min,
-          xmax = PCscores_interval$PC1.max,
-          ymin = PCscores_interval$PC2.min,
-          ymax = PCscores_interval$PC2.max,
+          xmin = .data$PC1.min,
+          xmax = .data$PC1.max,
+          ymin = .data$PC2.min,
+          ymax = .data$PC2.max,
           fill = grDevices::gray.colors(n),
           alpha = 0.5
         ),
@@ -210,11 +214,18 @@ ggInterval_PCA <- function(data = NULL,
     )), class = "uneval"))
     
     #plot
-    base <- ggplot(PCscores_interval,
-                   aes(PCscores_interval$PC1.min, PCscores_interval$PC2.min)) +
+    base <- ggplot(PCscores_interval, aes(.data$PC1.min, .data$PC2.min)) +
       do.call(geom_rect, allmapping) +
-      geom_text(label = myRowNames, size = 3) +
-      guides(colour = FALSE, alpha = FALSE)
+      guides(colour = "none", alpha = "none")
+    
+    if (showLabels) {
+      base <- base +
+        geom_text(
+          aes(label = .data$rowname_label),
+          size = labelSize,
+          check_overlap = checkOverlap
+        )
+    }
     
     if (is.null(concepts_group)) {
       base <- base + scale_fill_manual(name = "Concept",
@@ -224,9 +235,8 @@ ggInterval_PCA <- function(data = NULL,
   }
   
   if (is.null(concepts_group)) {
-    base <- base + guides(fill = F,
-                          colour = FALSE,
-                          color = F)
+    base <- base + guides(fill = "none",
+                          colour = "none")
   }
   base <- base + labs(x = "PC1", y = "PC2")
   mypca$ggplotPCA <- base

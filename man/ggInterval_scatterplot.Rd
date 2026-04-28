@@ -2,9 +2,12 @@
 % Please edit documentation in R/ggInterval_scatterplot.R
 \name{ggInterval_scatterplot}
 \alias{ggInterval_scatterplot}
-\title{scatter plot for two continuous interval data}
+\title{Scatter plot for two continuous interval variables}
 \usage{
-ggInterval_scatterplot(data = NULL,mapping = aes(NULL), ...)
+ggInterval_scatterplot(data = NULL,mapping = aes(NULL),
+showLabels = TRUE, labelSize = 3,
+labelPosition = "topright", labelNudgeX = 0, labelNudgeY = 0,
+checkOverlap = FALSE, ...)
 }
 \arguments{
 \item{data}{A ggInterval object.It can also be either RSDA object or
@@ -16,41 +19,49 @@ If specified and inherit. aes = TRUE (the default),
 it is combined with the default mapping at the top level of
 the plot. You must supply mapping if there is no plot mapping.}
 
+\item{showLabels}{Logical. If \code{TRUE}, add row labels to the rectangles.}
+
+\item{labelSize}{Numeric text size used when \code{showLabels = TRUE}.}
+
+\item{labelPosition}{Character label position used when
+\code{showLabels = TRUE}. One of \code{"topright"}, \code{"topleft"},
+\code{"bottomright"}, or \code{"bottomleft"}.}
+
+\item{labelNudgeX}{Numeric horizontal adjustment applied to label positions.}
+
+\item{labelNudgeY}{Numeric vertical adjustment applied to label positions.}
+
+\item{checkOverlap}{Logical. Passed to \code{geom_text()} to suppress
+overlapping labels when needed.}
+
 \item{...}{Others in ggplot2.}
 }
 \value{
 Return a ggplot2 object.
 }
 \description{
-Visualize the twwo continuous variable distribution
-by rectangle and each of its width and heigth represents a
-interval of the data.
+Visualize the distribution of two continuous
+interval-valued variables with rectangles whose widths and heights
+represent the corresponding intervals.
 }
 \examples{
-\donttest{
-a<-rnorm(1000,0,5)
-b<-runif(1000,-20,-10)
-d<-as.data.frame(cbind(norm=a,unif=b))
-ggInterval_scatterplot(d,aes(a,b))
-
-
-ggInterval_scatterplot(mtcars[,c("mpg","wt","qsec")],
-    aes(x=mpg,y=wt,
-    col="red",lty=2,fill="blue",alpha=0.3))
-
-
-myIris <- classic2sym(iris,groupby = "Species")$intervalData
-p<-ggInterval_scatterplot(myIris,aes(myIris$Petal.Length,myIris$Petal.Width))
-p
-p+scale_fill_manual(labels=rownames(myIris),
-                   values=c("red","blue","green"),
-                   name="Group")
-
-
-mydata <- ggInterval::facedata
-p<-ggInterval_scatterplot(mydata[1:10,],aes(AD,BC,alpha=0.2))
-p+scale_fill_manual(labels=rownames(mydata)[1:10],
-                   values=rainbow(10),
-                   name="Group")
-}
+Subjects <- substr(rownames(facedata), 1, 3)
+ggInterval_scatterplot(facedata, aes(x = AD, y = BC))
+ggInterval_scatterplot(
+  facedata,
+  aes(x = AD, y = BC, fill = Subjects),
+  showLabels = TRUE,
+  labelSize = 2.6,
+  labelPosition = "topright",
+  labelNudgeX = 0.8,
+  labelNudgeY = 0.15,
+  checkOverlap = TRUE,
+  col = "black"
+)
+p <- ggInterval_scatterplot(facedata[1:10, ], aes(x = AD, y = BC, alpha = 0.2))
+p + scale_fill_manual(
+  labels = rownames(facedata)[1:10],
+  values = rainbow(10),
+  name = "Group"
+)
 }

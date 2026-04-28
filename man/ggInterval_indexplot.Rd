@@ -5,7 +5,7 @@
 \title{Plot the range of each observations}
 \usage{
 ggInterval_indexplot(data = NULL,mapping = aes(NULL),
-plotAll = FALSE)
+plotAll = FALSE, row_order = "o", user_order = NULL, labels = FALSE)
 }
 \arguments{
 \item{data}{A ggInterval object. It can also be either RSDA object or
@@ -19,6 +19,22 @@ the plot. You must supply mapping if there is no plot mapping.
 It is the same as the mapping of ggplot2.}
 
 \item{plotAll}{plot all variables}
+
+\item{row_order}{Row ordering used when \code{plotAll = TRUE}: \code{"o"}
+for the original order, \code{"c"} for ascending interval centers within
+each variable panel, \code{"r"} for ascending interval ranges within each
+variable panel, and \code{"u"} for a user-defined permutation supplied
+through \code{user_order}.}
+
+\item{user_order}{User-defined row permutation used when
+\code{row_order = "u"} and \code{plotAll = TRUE}. Supply either an integer
+permutation of \code{1:nrow(data)} or a character permutation of the row
+names.}
+
+\item{labels}{Logical. When \code{TRUE} and \code{plotAll = TRUE}, repeat the
+row labels inside each variable panel. This is especially useful for ordered
+displays with \code{row_order = "c"} or \code{"r"}. For ordered displays,
+the outer left-side row labels are suppressed by default.}
 }
 \value{
 Return a ggplot2 object.
@@ -29,14 +45,14 @@ by using a kind of margin bar that indicate the minimal and maximal of
 observations.
 }
 \examples{
-#the observations show on the y-axis .values on x-axis
-ggInterval_indexplot(iris,aes(x=iris$Sepal.Length))
-
-#change above axis
-ggInterval_indexplot(mtcars,aes(y=disp,col="red",fill="grey"))
-
-#symbolic data
 mydata <- ggInterval::facedata
-ggInterval_indexplot(mydata,aes(x=3:13,y=AD))
+Subjects <- substr(rownames(mydata), 1, 3)
+ggInterval_indexplot(mydata, aes(x = AD))
+ggInterval_indexplot(mydata, aes(x = AD, fill = Subjects))
+ggInterval_indexplot(mydata, plotAll = TRUE, row_order = "c")
+custom_order <- c(19:21, 22:24, 1:18, 25:27)
+ggInterval_indexplot(mydata["AD"], plotAll = TRUE,
+                     row_order = "u", user_order = custom_order)
+ggInterval_indexplot(mydata, plotAll = TRUE, row_order = "c", labels = TRUE)
 
 }

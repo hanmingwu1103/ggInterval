@@ -4,7 +4,8 @@
 \alias{ggInterval_boxplot}
 \title{A interval Box plot}
 \usage{
-ggInterval_boxplot(data = NULL,mapping = aes(NULL),plotAll=FALSE)
+ggInterval_boxplot(data = NULL,mapping = aes(NULL),plotAll=FALSE,
+width_type = "violin-like")
 }
 \arguments{
 \item{data}{A ggInterval object. It can also be either RSDA object or
@@ -18,27 +19,24 @@ the plot. You must supply mapping if there is no plot mapping.
 It is the same as the mapping of ggplot2.}
 
 \item{plotAll}{booleans, if TRUE, plot all variable together}
+
+\item{width_type}{Box-width style. Use \code{"violin-like"} (default) to let
+the rectangle widths reflect local interval concentration,
+\code{"quantile-depth"} for progressively narrower quantile boxes, or
+\code{"side-by-side"} for conventional boxplots of the lower and upper
+bounds shown next to each other.}
 }
 \value{
 Return a ggplot2 object.
 }
 \description{
-Visualize the one continuous variable distribution
-by box represented by multiple rectangles.
+Visualize the one continuous variable distribution using one of
+three interval-aware boxplot styles.
 }
 \examples{
-p<-ggInterval_boxplot(iris,aes(iris$Petal.Length))
-p
-p+scale_fill_manual(values = c("red","yellow",
-    "green","blue","black"),
-    labels=c("0\%","25\%","50\%","75\%","100\%"),
-    name="quantile")
-
-mydata<-ggInterval::facedata
-ggInterval_boxplot(mydata,aes(AD,col="black",alpha=0.5))
-
-myMtcars<-classic2sym(mtcars)
-myMtcars<-myMtcars$intervalData
-ggInterval_boxplot(myMtcars,aes(disp))
+mydata <- ggInterval::facedata
+ggInterval_boxplot(mydata, aes(x = AD))
+ggInterval_boxplot(mydata, aes(x = AD), width_type = "quantile-depth")
+ggInterval_boxplot(mydata, plotAll = TRUE, width_type = "side-by-side")
 
 }

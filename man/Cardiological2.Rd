@@ -7,6 +7,10 @@
 \format{
 An object of class \code{symbolic_tbl} (inherits from \code{tbl_df}, \code{tbl}, \code{data.frame}) with 15 rows and 3 columns.
 }
+\source{
+Adapted from \code{RSDA::Cardiological2}; see
+  \url{https://CRAN.R-project.org/package=RSDA}.
+}
 \usage{
 data(Cardiological2)
 }
@@ -18,7 +22,8 @@ data(Cardiological2)
 ggInterval_indexplot(Cardiological2, aes(x = Syst))
 }
 \references{
-Billard L. and  Diday E. (2006).Symbolic data analysis:
-Conceptual statistics and data mining. Wiley, Chichester.
+Billard, Lynne and Diday, Edwin (2006).
+\emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
+Chichester, UK: John Wiley and Sons.
 }
 \keyword{datasets}

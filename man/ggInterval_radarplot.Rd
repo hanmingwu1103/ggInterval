@@ -2,7 +2,7 @@
 % Please edit documentation in R/ggInterval_radarplot.R
 \name{ggInterval_radarplot}
 \alias{ggInterval_radarplot}
-\title{A interval Radar plot}
+\title{Radar plot for symbolic data}
 \usage{
 ggInterval_radarplot(data=NULL,layerNumber=3,
 inOneFig=TRUE,showLegend=TRUE,showXYLabs=FALSE,
@@ -22,67 +22,89 @@ addText_modal.p=FALSE)
 classical data frame(not recommended),which will be automatically convert to ggInterval
 data.}
 
-\item{layerNumber}{number of layer of a concentric circle,usually
-to visuallize the reach of a observation in particularly variable.}
+\item{layerNumber}{Number of concentric guide layers in the radar display.}
 
-\item{inOneFig}{whether plot all observations in one figure.if not,
-it will generate a new windows containing distinct observations.}
+\item{inOneFig}{Logical. If \code{TRUE}, draw all selected observations in
+one figure. Otherwise, generate separate figures for the selected
+observations.}
 
-\item{showLegend}{whether show the legend.}
+\item{showLegend}{Logical. Whether to show the legend.}
 
-\item{showXYLabs}{whether show the x,y axis labels.}
+\item{showXYLabs}{Logical. Whether to show the x- and y-axis labels.}
 
-\item{plotPartial}{a numeric vector,which is the row index from
-the data.if it is not null, it will extract the row user deciding
-to draw a radar plot from original data.Notes : the data must be
-an interval data if the plotPartial is not null.}
+\item{plotPartial}{Numeric vector giving the row indices to plot. If
+\code{NULL}, all observations are used. This argument is ignored when
+\code{type = "quantile"} because the quantile plot summarizes all
+observations.}
 
-\item{alpha}{aesthetic alpha of fill color}
+\item{alpha}{Alpha transparency for filled elements.}
 
-\item{base_circle}{boolean, if true, it will generate inner circle.}
+\item{base_circle}{Logical. If \code{TRUE}, add inner guide circles.}
 
-\item{base_lty}{line type in base figure}
+\item{base_lty}{Line type used in the base figure.}
 
-\item{addText}{add the value of interval-valued variables in figure}
+\item{addText}{Logical. Whether to add interval-valued labels to the plot.}
 
-\item{type}{different type of radar,it can be "default","rect","quantile"}
+\item{type}{Radar representation. Use \code{"default"} for polygon
+intervals, \code{"rect"} for rectangle intervals, or \code{"quantile"}
+for the quantile-radar display.}
 
-\item{quantileNum}{if type == "quantile", it will provide the number of percentage}
+\item{quantileNum}{Number of quantile layers when
+\code{type = "quantile"}.}
 
-\item{Drift}{The drift term, which determines the radar values beginning.}
+\item{Drift}{Drift term controlling where the radar values begin.}
 
-\item{addText_modal}{add the factor of modal multi-valued variables in figure..}
+\item{addText_modal}{Logical. Whether to add labels for modal
+multivalued variables.}
 
-\item{addText_modal.p}{add the value of modal multi-valued variables in figure..}
+\item{addText_modal.p}{Logical. Whether to add modal percentages.}
 }
 \description{
-Using ggplot2 package to make a radar plot with multiple
-variables.Each variables contains min values and max values as a
-symbolic data.
+Visualize interval-valued and mixed symbolic data with a
+radar-style display. Interval-valued variables are represented through
+their lower and upper bounds, while modal multivalued variables can be
+shown with stacked bars. When \code{type = "quantile"}, the function
+summarizes all observations of each interval-valued variable through
+nested empirical quantile bands.
 }
 \examples{
-# must specify plotPartial to some certain rows you want to plot
+\donttest{
+# must specify plotPartial to the rows you want to plot
 Environment.n <- Environment[, 5:17]
 ggInterval_radarplot(Environment.n,
-                plotPartial = 2,
-                showLegend = FALSE,
-                base_circle = TRUE,
-                base_lty = 2,
-                addText = FALSE
+  plotPartial = 2,
+  showLegend = FALSE,
+  base_circle = TRUE,
+  base_lty = 2,
+  addText = FALSE
 ) +
- labs(title = "") +
- scale_fill_manual(values = c("gray50")) +
- scale_color_manual(values = c("red"))
+  labs(title = "") +
+  scale_fill_manual(values = c("gray50")) +
+  scale_color_manual(values = c("red"))
 
 ggInterval_radarplot(Environment,
-                plotPartial = 2,
-                showLegend = FALSE,
-                base_circle = FALSE,
-                base_lty = 1,
-                addText = TRUE
+  plotPartial = 2,
+  showLegend = FALSE,
+  base_circle = FALSE,
+  base_lty = 1,
+  addText = TRUE,
+  type = "rect"
 ) +
- labs(title = "") +
- scale_fill_manual(values = c("gray50")) +
- scale_color_manual(values = c("gray50"))
+  labs(title = "") +
+  scale_fill_manual(values = c("gray50")) +
+  scale_color_manual(values = c("gray50"))
+
+ggInterval_radarplot(
+  facedata,
+  base_circle = FALSE,
+  base_lty = 1,
+  type = "quantile",
+  quantileNum = 5,
+  showLegend = TRUE,
+  Drift = 0
+) +
+  scale_fill_brewer(palette = "Greys") +
+  labs(title = "", fill = "Quantiles")
+}
 
 }

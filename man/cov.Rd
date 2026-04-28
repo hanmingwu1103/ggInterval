@@ -33,7 +33,7 @@ covariances in the presence of missing values. This must be (an abbreviation of)
  one of the strings 'everything', 'all.obs', 'complete.obs', 'na.or.complete',
  or 'pairwise.complete.obs'.}
 
-\item{method}{The method to be use.}
+\item{method}{The method to use.}
 
 \item{na.rm}{As in R cov function.}
 }
@@ -43,13 +43,31 @@ Return a real number.
 \description{
 This function compute the symbolic covariance.
 }
+\details{
+Supported interval-valued methods are:
+\itemize{
+  \item \code{"centers"}: covariance of interval centers.
+  \item \code{"B"}: Billard covariance.
+  \item \code{"BD"}: Billard-Diday covariance.
+  \item \code{"BG"}: Bertrand-Goupil covariance.
+}
+}
 \references{
-Billard L. and  Diday E. (2006).
-Symbolic data analysis: Conceptual statistics and data mining. Wiley, Chichester.
+Bertrand, Patrice and Goupil, Francoise (2000). Descriptive Statistics for
+Symbolic Data. In Hans-Hermann Bock and Edwin Diday (eds.),
+\emph{Analysis of Symbolic Data}, pp. 106--124. Berlin and Heidelberg:
+Springer.
 
-Rodriguez, O. (2000).
-Classification et Modeles Lineaires en Analyse des Donnees Symboliques. Ph.D. Thesis,
-Paris IX-Dauphine University.
+Billard, Lynne and Diday, Edwin (2006). \emph{Symbolic Data Analysis:
+Conceptual Statistics and Data Mining}. Chichester, UK: John Wiley and Sons.
+
+Billard, Lynne (2008). Sample covariance functions for complex quantitative
+data. In \emph{Proceedings of the World IASC Conference}, pp. 157--163,
+Yokohama, Japan.
+
+Rodriguez-Rojas, Oldemar (2000). \emph{Classification et modeles lineaires
+en analyse des donnees symboliques}. PhD thesis, Universite Paris IX
+Dauphine.
 }
 \author{
 Oldemar Rodriguez Rojas

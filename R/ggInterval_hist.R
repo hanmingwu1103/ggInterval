@@ -13,31 +13,29 @@
 #' it is combined with the default mapping at the top level of
 #' the plot. You must supply mapping if there is no plot mapping.
 #' It is the same as the mapping of ggplot2.
-#' @param method It can be equal-bin(default) or unequal-bin.Enqual-bin means
-#' the width in histogram is equal, which represent all intervals divided
-#' have the same range. unequal-bin means the range of intervals are not
-#' the same,and it can be more general on data. Thus, the bins of unequal-bin
-#' method depends on the data, and the argument "bins" will be unused.
+#' @param method It can be \code{"equal-bin"} (default) or
+#' \code{"unequal-bin"}. Equal-bin means the histogram uses equally spaced
+#' intervals. Unequal-bin means the bin widths are determined by the data,
+#' so the argument \code{bins} is unused in that case.
 #' @param bins x axis bins,which mean how many partials the variable
 #' @param plotAll boolean, whether plot all variables, default FALSE.
 #' will be separate into.
 #' @param position "stack" or "identity"
 #' @param alpha fill alpha
-#' @return Return a ggplot2 object.
+#' @return An object of class \code{ggInterval_hist_result}. A direct call
+#' displays the histogram, and the returned object stores the ggplot object in
+#' \code{$plot} together with the accompanying frequency tables.
 #' @usage ggInterval_hist(data = NULL,mapping = aes(NULL),method="equal-bin",bins=10,
 #'  plotAll = FALSE, position = "identity", alpha = 0.5)
 #' @examples
-#' ggInterval_hist(mtcars,aes(x=wt))
+#' mydata <- ggInterval::facedata
+#' ggInterval_hist(mydata, aes(x = AD), bins = 10)
 #'
-#' ggInterval_hist(iris,aes(iris$Petal.Length,col="blue",alpha=0.2,
-#'    fill="red"),bins=30)
+#' hist_obj <- ggInterval_hist(mydata, plotAll = TRUE, bins = 10)
+#' hist_obj
+#' hist_obj$`Table AD`
 #'
-#'
-#' d<-data.frame(x=rnorm(1000,0,1))
-#' p<-ggInterval_hist(d,aes(x=x),bins=40,method="equal-bin")$plot
-#' p
-#'
-#' p+scale_fill_manual(values=rainbow(40))+labs(title="myNorm")
+#' ggInterval_hist(mydata, aes(x = AD), method = "unequal-bin")
 #'
 #' @export
 ggInterval_hist <- function(data = NULL,
@@ -248,6 +246,7 @@ ggInterval_hist <- function(data = NULL,
         ),
         fill = "grey",
         col = "black",
+        linewidth = 0.2,
         alpha = alpha
       )
       allmapping <- as.list(structure(as.expression(c(
@@ -287,7 +286,7 @@ ggInterval_hist <- function(data = NULL,
       }
       
       resultSet[["plot"]] <- base
-      return(resultSet)
+      return(as_ggInterval_hist_result(resultSet))
       
     } else if (method == "equal-bin") {
       myhist <- NULL
@@ -416,7 +415,7 @@ ggInterval_hist <- function(data = NULL,
                    fill = "Group",
                    y = "Frequency") +
               scale_x_continuous(n.breaks = 8) +
-              guides(colour = FALSE, alpha = FALSE) +
+              guides(colour = "none", alpha = "none") +
               facet_grid(group ~ .)
           } else if (position == "stack") {
             myhist <- stackFreq(myhist, myGroup)
@@ -440,7 +439,7 @@ ggInterval_hist <- function(data = NULL,
                    fill = "Group",
                    y = "Frequency") +
               scale_x_continuous(n.breaks = 8) +
-              guides(colour = FALSE, alpha = FALSE) +
+              guides(colour = "none", alpha = "none") +
               facet_grid(group ~ .)
           } else{
             stop("The position is not implemented.")
@@ -525,7 +524,7 @@ ggInterval_hist <- function(data = NULL,
               scale_x_continuous(breaks = (myhist[myhist$myFill == myGroup[1], "start"] + myhist[myhist$myFill == myGroup[1], "end"]) /
                                    2,
                                  labels = unique(nameList)) +
-              guides(colour = FALSE, alpha = FALSE)
+              guides(colour = "none", alpha = "none")
           } else if (position == "stack") {
             myhist <- stackFreq(myhist, myGroup)
             base <- ggplot(data = myhist, aes(fill = myhist$myFill)) +
@@ -550,7 +549,7 @@ ggInterval_hist <- function(data = NULL,
               scale_x_continuous(breaks = (myhist[myhist$myFill == myGroup[1], "start"] + myhist[myhist$myFill == myGroup[1], "end"]) /
                                    2,
                                  labels = unique(nameList)) +
-              guides(colour = FALSE, alpha = FALSE)
+              guides(colour = "none", alpha = "none")
           } else{
             stop("The position is not implemented.")
           }
@@ -577,9 +576,9 @@ ggInterval_hist <- function(data = NULL,
             labs(x = attr) +
             scale_x_discrete(labels = nameList) +
             scale_fill_manual(values = rep("black", bins * length(attr))) +
-            guides(colour = FALSE,
-                   alpha = FALSE,
-                   fill = FALSE)
+            guides(colour = "none",
+                   alpha = "none",
+                   fill = "none")
           
           #make table
           resultSet[[paste0("Table ", unique(myhist$group))]] <- data.frame(
@@ -593,12 +592,26 @@ ggInterval_hist <- function(data = NULL,
       }
       
       resultSet[["plot"]] <- base
-      return(resultSet)
+      return(as_ggInterval_hist_result(resultSet))
       
     } else{
       stop(paste0("ERROR : Unrecognize method : ", method, " ."))
     }
   })
+}
+
+print.ggInterval_hist_result <- function(x, ...) {
+  if (!is.null(x$plot) && inherits(x$plot, "ggplot")) {
+    print(x$plot)
+    return(invisible(x))
+  }
+  print(unclass(x))
+  invisible(x)
+}
+
+as_ggInterval_hist_result <- function(x) {
+  class(x) <- c("ggInterval_hist_result", "list")
+  x
 }
 
 

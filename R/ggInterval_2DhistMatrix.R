@@ -1,185 +1,211 @@
 #' @name ggInterval_2DhistMatrix
 #' @title 2-Dimension histogram matrix
-#' @description  Visualize the all continuous variable distribution
-#' by dividing both the x axis and y axis into bins,and calculating
-#' the frequency of observation interval in each bin.Eventually
-#' show it by a matrix plot. Note: this function will automatically
-#' filter out the discrete variables,and plot all continuous in
-#' input data, so it can not be necessary that give the particularly
-#' variables in aes such like (aes(x = x, y = y)). It isn't also
-#' recommended to deal with too many variables because the
-#' big O in calculating full matrix will be too large.
+#' @description Visualize all continuous interval-valued variables with a
+#' matrix of 2D histograms. Each off-diagonal panel shows a 2D histogram for
+#' a pair of variables, and each diagonal panel displays the variable name.
 #' @import tidyverse rlang ggplot2
 #' @importFrom RSDA is.sym.interval
-#' @importFrom dplyr between
 #' @importFrom magrittr %>%
-#' @param data A ggInterval object. It can also be either RSDA object or
-#' classical data frame, which will be automatically convert to ggInterval
-#' data.
+#' @param data A ggInterval object. It can also be either an RSDA object or
+#' a classical data frame, which will be automatically converted to
+#' ggInterval data.
 #' @param mapping Set of aesthetic mappings created by aes() or aes_().
-#' If specified and inherit. aes = TRUE (the default),
-#' it is combined with the default mapping at the top level of
-#' the plot. You must supply mapping if there is no plot mapping.
-#' It is the same as the mapping of ggplot2.
-#' @param xBins x axis bins,which mean how many bins
-#' x variable will be separate into
-#' @param yBins y axis bins. It is the same as xBins
-#' @param removeZero whether remove data whose frequency is equal to zero
-#' @param addFreq where add frequency text in each cells.
-#' @return Return a plot with ggplot2 object
-#' @usage ggInterval_2DhistMatrix(data = NULL,mapping = aes(NULL)
-#' ,xBins = 8,yBins=8,removeZero = FALSE,
-#' addFreq = TRUE)
+#' If specified and inherit.aes = TRUE (the default), it is combined with
+#' the default mapping at the top level of the plot. It is the same as the
+#' mapping of ggplot2. This function ignores \code{x} and \code{y} mappings
+#' and plots all continuous interval-valued variables.
+#' @param method Histogram partition method. Use \code{"equal-bin"} for
+#' equally spaced bins or \code{"unequal-bin"} for non-equidistant bins
+#' defined by the observed interval endpoints.
+#' @param xBins Number of x-axis bins used when \code{method = "equal-bin"}.
+#' @param yBins Number of y-axis bins used when \code{method = "equal-bin"}.
+#' @param display Metric shown in the cells. Use \code{"p"} for relative
+#' frequency, \code{"f"} for weighted frequency, or \code{"h"} for density.
+#' @param palette ColorBrewer palette passed to \code{scale_fill_distiller()}.
+#' @param direction Direction passed to \code{scale_fill_distiller()}.
+#' @param tau Non-negative tolerance used when \code{method = "unequal-bin"}.
+#' Consecutive breakpoints whose gaps are smaller than \code{tau} are merged.
+#' @param removeZero Whether remove cells whose frequency is equal to zero.
+#' @param cell_labels Logical. If \code{TRUE}, add cell labels.
+#' @param label_rule Rule used when \code{cell_labels = TRUE}. The default
+#' \code{"above-mean"} shows only cells whose displayed values exceed the
+#' mean value within the matrix. Alternatives are \code{"nonzero"} and
+#' \code{"all"}.
+#' @param addFreq Deprecated alias for \code{cell_labels}.
+#' @return Return a ggplot2 object.
+#' @usage ggInterval_2DhistMatrix(data = NULL, mapping = aes(NULL),
+#' method = "equal-bin", xBins = 8, yBins = 8,
+#' display = "p", palette = "Blues", direction = 1, tau = 0,
+#' removeZero = FALSE, cell_labels = FALSE, label_rule = "above-mean",
+#' addFreq = NULL)
 #'
 #' @examples
-#' ggInterval_2DhistMatrix(oils, xBins = 5, yBins = 5)
+#' ggInterval_2DhistMatrix(
+#'   oils,
+#'   xBins = 5,
+#'   yBins = 5,
+#'   display = "p",
+#'   palette = "Blues",
+#'   cell_labels = TRUE
+#' )
+#'
+#' ggInterval_2DhistMatrix(
+#'   oils,
+#'   method = "unequal-bin",
+#'   display = "p",
+#'   palette = "Blues",
+#'   tau = 0.5
+#' )
 #'
 #' @export
 ggInterval_2DhistMatrix <- function(data = NULL,
                                     mapping = aes(NULL),
+                                    method = "equal-bin",
                                     xBins = 8,
                                     yBins = 8,
+                                    display = "p",
+                                    palette = "Blues",
+                                    direction = 1,
+                                    tau = 0,
                                     removeZero = FALSE,
-                                    addFreq = TRUE) {
-  #test big O
-  #globalVariables(".", add = F)
+                                    cell_labels = FALSE,
+                                    label_rule = "above-mean",
+                                    addFreq = NULL) {
   . <- NULL
-  if (xBins + yBins > 100) {
-    stop("ERROR : Bins are too large to calculate.Suggest two bins be smaller than 100.")
+  method <- match_hist2d_method(method)
+  display <- match_hist2d_display(display)
+  label_rule <- match.arg(label_rule, c("above-mean", "nonzero", "all"))
+  if (!is.null(addFreq)) {
+    cell_labels <- addFreq
   }
-  
-  #data preparing
-  argsNum <- length(mapping)
-  args <- lapply(mapping[1:argsNum], FUN = rlang::get_expr)
-  this.x <- args$x
-  this.y <- args$y
-  #remove user's x,y input,remain Aesthetic
-  if ((!is.null(this.x)) && (!is.null(this.y))) {
-    #both have value
-    usermapping <- mapping[-c(1, 2)]
-  } else if ((!is.null(this.x)) || (!is.null(this.y))) {
-    #only one value
-    usermapping <- mapping[-1]
+
+  if (method == "equal-bin" && xBins + yBins > 100) {
+    stop("ERROR : Bins are too large to calculate. Suggest both axes use fewer than 50 bins.")
   }
-  
-  #test data illegal
+
   ggSymData <- testData(data)
   iData <- ggSymData$intervalData
-  p <- dim(data)[2]
-  n <- dim(iData)[1]
-  
-  #test clearly visualize
-  if (p * p * n * xBins * yBins > 200000 &
-      p * p * n * xBins * yBins <= 200000) {
-    warning("It is not recommended number of variables and xy Bins be too large.")
-  } else if (p * p * n * xBins * yBins > 200000) {
-    stop(
-      paste0(
-        "Out of time limits. The sample size and xy bins ",
-        p * p * n * xBins * yBins,
-        " are too large."
-      )
-    )
-  }
-  
-  #test big O
+  n <- nrow(iData)
+
   if (n > 50) {
-    stop("Out of time limits.Suggested number of observations should be less than 50.")
+    stop("Out of time limits. Suggested number of observations should be less than 50.")
   }
-  if (n * p > 200) {
-    stop("Out of time limits.Suggested dimension should be less than (50 x 4).")
+
+  numericData <- unlist(lapply(iData, FUN = RSDA::is.sym.interval))
+  iData <- iData[, numericData, drop = FALSE]
+
+  if (ncol(iData) < 2) {
+    stop("At least two numeric interval-valued variables are required.")
   }
-  
-  
-  
-  numericData <- unlist(lapply(iData[, 1:p] , FUN = RSDA::is.sym.interval))
-  iData <- iData[, numericData]
-  p <- dim(iData)[2]
-  
-  #now iData only have numeric data
-  if (dim(iData)[2] < dim(data)[2]) {
-    p <- dim(iData)[2]
-    n <- dim(iData)[1]
+
+  if (ncol(iData) < dim(ggSymData$intervalData)[2]) {
     warning("Ignore non-numeric data.")
   }
-  
+
+  p <- ncol(iData)
+  if (n * p > 200) {
+    stop("Out of time limits. Suggested dimension should be less than (50 x 4).")
+  }
+
+  x_bin_sizes <- vapply(
+    seq_len(p),
+    FUN.VALUE = numeric(1),
+    FUN = function(i) {
+      length(build_hist2d_breaks(iData[[i]], xBins, method, tau = tau)) - 1
+    }
+  )
+  y_bin_sizes <- vapply(
+    seq_len(p),
+    FUN.VALUE = numeric(1),
+    FUN = function(i) {
+      length(build_hist2d_breaks(iData[[i]], yBins, method, tau = tau)) - 1
+    }
+  )
+  complexity <- n * p * p * max(x_bin_sizes) * max(y_bin_sizes)
+  if (complexity >= 2000000 && complexity < 8000000) {
+    warning("It is not recommended number of variables and bins be too large.")
+  } else if (complexity >= 8000000) {
+    stop("Out of time limits. The sample size, dimensions, and bins are too large.")
+  }
+
+  usermapping <- mapping[setdiff(names(mapping), c("x", "y"))]
   freq.matrix <- NULL
-  for (i in 1:p) {
-    for (u in 1:p) {
-      if (i != u) {
+  for (i in seq_len(p)) {
+    var_x <- colnames(iData)[i]
+    x_breaks <- build_hist2d_breaks(iData[[i]], xBins, method, tau = tau)
+    x_mid <- (min(x_breaks) + max(x_breaks)) / 2
+
+    for (u in seq_len(p)) {
+      var_y <- colnames(iData)[u]
+
+      if (i == u) {
+        diag_row <- data.frame(
+          f = 0,
+          p = 0,
+          h = 0,
+          x1 = min(x_breaks),
+          x2 = max(x_breaks),
+          y1 = min(x_breaks),
+          y2 = max(x_breaks),
+          area = (max(x_breaks) - min(x_breaks))^2,
+          xmid = x_mid,
+          ymid = x_mid,
+          display_value = 0,
+          display_metric = display,
+          xv = var_x,
+          yv = var_y,
+          isPlot = FALSE,
+          textXY = x_mid
+        )
         freq.matrix <- rbind(
           freq.matrix,
-          data.frame(
-            hist2d(
-              data = ggSymData,
-              attr1 = i,
-              attr2 = u,
-              xBins = xBins,
-              yBins = yBins,
-              args = args
-            ),
-            xv = colnames(iData)[i],
-            yv = colnames(iData)[u],
-            isPlot = T,
-            textXY = 0
-          )
+          diag_row
         )
-      }
-      else{
-        freq.matrix <- rbind(
-          freq.matrix,
-          data.frame(
-            freq = 0,
-            x1 = 0,
-            x2 = 0,
-            y1 = 0,
-            y2 = 0,
-            xv = colnames(iData)[i],
-            yv = colnames(iData)[u],
-            isPlot = F,
-            textXY = 0
-          )
-        )
+      } else {
+        pair_data <- build_hist2d_data(
+          iData = iData,
+          attr1 = var_x,
+          attr2 = var_y,
+          xBins = xBins,
+          yBins = yBins,
+          method = method,
+          tau = tau
+        )$data
+        pair_data <- hist2d_assign_display(pair_data, display = display)
+        pair_data$xv <- var_x
+        pair_data$yv <- var_y
+        pair_data$isPlot <- TRUE
+        pair_data$textXY <- NA_real_
+        freq.matrix <- rbind(freq.matrix, pair_data)
       }
     }
   }
-  
-  for (var in colnames(iData)) {
-    temp <- dplyr::filter(freq.matrix, freq.matrix$xv == var &
-                            freq.matrix$isPlot)
-    freq.matrix[!freq.matrix$isPlot &
-                  freq.matrix$xv == var, "textXY"] <- (min(temp$x1) + max(temp$x2)) / 2
-    
-  }
-  
-  freq.matrix[, "xmid"] <- (freq.matrix$x1 + freq.matrix$x2) / 2
-  freq.matrix[, "ymid"] <- (freq.matrix$y1 + freq.matrix$y2) / 2
-  #escape sparse matrix
+
   if (removeZero) {
-    freq.matrix <- rbind(freq.matrix[freq.matrix$freq != 0, ], freq.matrix[!freq.matrix$isPlot, ])
+    freq.matrix <- rbind(
+      freq.matrix[freq.matrix$display_value != 0 | !freq.matrix$isPlot, , drop = FALSE]
+    )
   }
-  m <- (max(freq.matrix$freq) + min(freq.matrix$freq)) / 2
-  
-  #build Aesthetic
-  usermapping <- args
+
+  plot_cells <- freq.matrix[freq.matrix$isPlot, , drop = FALSE]
+  border_linewidth <- if (method == "unequal-bin") 0.15 else 0.3
+
   mymapping <- list(
-    data = . %>% dplyr::filter(.data$isPlot)
-    ,
+    data = . %>% dplyr::filter(.data$isPlot),
     mapping = aes(
       xmin = .data$x1,
       xmax = .data$x2,
       ymin = .data$y1,
       ymax = .data$y2,
-      fill = .data$freq
-    )
-    ,
-    alpha = 0.5
+      fill = .data$display_value
+    ),
+    alpha = 0.5,
+    linewidth = border_linewidth
   )
   allmapping <- as.list(structure(as.expression(c(
     usermapping, mymapping
   )), class = "uneval"))
-  
-  #plot
+
   base <- ggplot(data = freq.matrix, aes(.data$x1, .data$y1)) +
     do.call(geom_rect, allmapping) +
     geom_text(
@@ -192,103 +218,35 @@ ggInterval_2DhistMatrix <- function(data = NULL,
       size = 12
     ) +
     facet_grid(.data$yv ~ .data$xv, scales = "free") +
-    scale_fill_gradient2(
-      name = "frequency",
-      low = "blue",
-      mid = "yellow",
-      high = "red",
-      midpoint = m,
-      limits = c(0, max(freq.matrix$freq))
+    scale_fill_distiller(
+      name = hist2d_legend_name(display),
+      palette = palette,
+      direction = direction,
+      limits = c(0, max(plot_cells$display_value))
     ) +
     labs(x = "", y = "") +
     theme_bw()
-  
-  if (addFreq) {
-    base <- base + geom_text(
-      data = . %>% dplyr::filter(.data$isPlot),
-      aes(
-        x = .data$xmid,
-        y = .data$ymid,
-        label = round(.data$freq, 1)
-      )
-    )
-  }
-  return(base)
-  
-}
 
-hist2d <- function(data = NULL, attr1, attr2, xBins, yBins, args) {
-  #start process
-  iData <- data$intervalData
-  n <- dim(iData)[1]
-  
-  #prepare loop data
-  r <- 8
-  minX <- min(iData[[attr1]]$min)
-  maxX <- max(iData[[attr1]]$max)
-  minY <- min(iData[[attr2]]$min)
-  maxY <- max(iData[[attr2]]$max)
-  recX <- seq(minX, maxX, (maxX - minX) / xBins)
-  recY <- seq(minY, maxY, (maxY - minY) / yBins)
-  
-  freq.Rectangle <- matrix(0, nrow = xBins, ncol = yBins)
-  
-  #start loop to calculate frequency values in histogram matrix
-  for (rx in 1:(length(recX) - 1)) {
-    for (ry in 1:(length(recY) - 1)) {
-      for (obs in 1:n) {
-        fx <- 0
-        fy <- 0
-        a <- iData[[attr1]][obs]$min
-        b <- iData[[attr1]][obs]$max
-        headIn <- a %>% between(recX[rx], recX[rx + 1])
-        tailIn <- b %>% between(recX[rx], recX[rx + 1])
-        contain <- recX[rx] %>% between(a, b)
-        if (headIn | tailIn | contain) {
-          temp <- sort(c(recX[rx], recX[rx + 1], a, b))
-          if (b - a == 0) {
-            fx <- fx + 1
-          } else{
-            fx <- fx + ((temp[3] - temp[2]) / (b - a))
-          }
-        }
-        
-        
-        a <- iData[[attr2]][obs]$min
-        b <- iData[[attr2]][obs]$max
-        headIn <- a %>% between(recY[ry], recY[ry + 1])
-        tailIn <- b %>% between(recY[ry], recY[ry + 1])
-        contain <- recY[ry] %>% between(a, b)
-        if (headIn | tailIn | contain) {
-          temp <- sort(c(recY[ry], recY[ry + 1], a, b))
-          if (b - a == 0) {
-            fy <- fy + 1
-          } else{
-            fy <- fy + ((temp[3] - temp[2]) / (b - a))
-          }
-        }
-        freq.Rectangle[rx, ry] <- freq.Rectangle[rx, ry] + fx * fy
-        # if(is.na(fx*fy)){
-        #   print(paste0("this is na, rx = ",rx,". ry = ",ry,". obs = ",obs))
-        # }
-      }
+  if (cell_labels) {
+    label_data <- switch(
+      label_rule,
+      "above-mean" = plot_cells[plot_cells$display_value > mean(plot_cells$display_value), , drop = FALSE],
+      "nonzero" = plot_cells[plot_cells$display_value != 0, , drop = FALSE],
+      "all" = plot_cells
+    )
+    if (nrow(label_data) != 0) {
+      label_data$cell_label <- format_hist2d_labels(label_data$display_value)
+      base <- base + geom_text(
+        data = label_data,
+        aes(
+          x = .data$xmid,
+          y = .data$ymid,
+          label = .data$cell_label
+        ),
+        inherit.aes = FALSE
+      )
     }
   }
-  #end loop for calculate
-  
-  #build data frame to plot (combine margin and values)
-  freq.matrix <- (c(as.matrix(freq.Rectangle)))
-  freq.matrix <- cbind(
-    freq.matrix,
-    rep(recX[1:(length(recX) - 1)], length(recY) - 1),
-    rep(recX[2:length(recX)], length(recY) - 1),
-    rep(recY[1:(length(recY) - 1)], each = length(recX) -
-          1),
-    rep(recY[2:length(recY)], each = length(recX) - 1)
-  )
-  colnames(freq.matrix) <- c("freq", "x1", "x2", "y1", "y2")
-  freq.matrix <- as.data.frame(freq.matrix)
-  
-  #freq.matrix$freq <- freq.matrix$freq/dim(iData)[1]
-  return(freq.matrix)
+
+  base
 }

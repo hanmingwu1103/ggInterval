@@ -33,7 +33,8 @@ ROM2;$I;168.15;172.14;$I;63.13;68.07;.........\cr
 ROM3;$I;167.11;171.19;$I;63.13;68.03;.........\cr
 }
 \source{
-\url{https://CRAN.R-project.org/package=RSDA}
+Adapted from \code{RSDA::facedata}; see
+  \url{https://CRAN.R-project.org/package=RSDA}.
 }
 \usage{
 data('facedata')
@@ -48,7 +49,8 @@ ggInterval_hist(facedata, aes(x = AD))
 }
 }
 \references{
-Billard L. and  Diday E. (2006).
-Symbolic data analysis: Conceptual statistics and data mining. Wiley, Chichester.
+Billard, Lynne and Diday, Edwin (2006).
+\emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
+Chichester, UK: John Wiley and Sons.
 }
 \keyword{datasets}

@@ -8,7 +8,8 @@
 An object of class \code{symbolic_tbl} (inherits from \code{tbl_df}, \code{tbl}, \code{data.frame}) with 11 rows and 3 columns.
 }
 \source{
-\url{https://CRAN.R-project.org/package=RSDA}
+Adapted from \code{RSDA::Cardiological}; see
+  \url{https://CRAN.R-project.org/package=RSDA}.
 }
 \usage{
 data(Cardiological)
@@ -21,7 +22,8 @@ data(Cardiological)
 ggInterval_indexplot(Cardiological, aes(x = Syst))
 }
 \references{
-Billard L. and  Diday E. (2006).Symbolic data analysis:
-Conceptual statistics and data mining. Wiley, Chichester.
+Billard, Lynne and Diday, Edwin (2006).
+\emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
+Chichester, UK: John Wiley and Sons.
 }
 \keyword{datasets}

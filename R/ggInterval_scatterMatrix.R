@@ -1,13 +1,14 @@
 #' @name ggInterval_scatterMatrix
-#' @title scatter plot for all variable by interval data.
-#' @description  Visualize the all continuous variable distribution
-#' by rectangle for both x-axis and y-axis with a matrix grid.
-#' Note: this function will automatically
-#' filter out the discrete variables,and plot all continuous in
-#' input data,so it can not be necessary that give the particularly
-#' variables in aes such like (aes(x = x, y = y)). It isn't also
-#' recommended to deal with too many variables because the
-#' big O in calculating full matrix will be too large.
+#' @title Scatterplot matrix for interval-valued data
+#' @description Visualize all continuous interval-valued variables with
+#' a matrix of pairwise interval scatterplots. Each off-diagonal panel
+#' shows interval rectangles for one variable pair, whereas each diagonal
+#' panel displays the variable name. This function automatically filters
+#' out non-interval variables and plots all remaining continuous interval
+#' variables, so explicit \code{x} and \code{y} mappings are not required.
+#' It is not recommended to apply the function to too many variables
+#' because the full pairwise matrix becomes computationally expensive and
+#' visually crowded.
 #' @import rlang ggplot2 tidyverse
 #' @importFrom grDevices gray.colors
 #' @importFrom grDevices grey.colors
@@ -19,33 +20,29 @@
 #' it is combined with the default mapping at the top level of
 #' the plot. You must supply mapping if there is no plot mapping.
 #' @param showLegend whether show the legend.
-#' @return Return a plot with no longer a ggplot2 object,instead
-#' of a marrangeGrob object.
-#' @usage ggInterval_scatterMatrix(data = NULL,mapping = aes(NULL), showLegend=FALSE)
+#' @param borderLinewidth Numeric border width used for the interval rectangles.
+#' @return Return a ggplot2 object.
+#' @usage ggInterval_scatterMatrix(data = NULL, mapping = aes(NULL),
+#' showLegend = FALSE, borderLinewidth = 0.08)
 #' @examples
-#' a<-rnorm(1000,0,5)
-#' b<-runif(1000,-20,-10)
-#' c<-rgamma(1000,10,5)
-#' d<-as.data.frame(cbind(norm=a,unif=b,gamma_10_5=c))
-#' ggInterval_scatterMatrix(d)
-#'
-#'
-#' ggInterval_scatterMatrix(mtcars[,c("mpg","wt","qsec")],
-#'     aes(col="red",lty=2,fill="blue",alpha=0.3))
-#'
-#'
-#' myIris <- classic2sym(iris,groupby = "Species")$intervalData
-#' ggInterval_scatterMatrix(myIris[,1:3])
-#'
-#'
-#' mydata <- ggInterval::Cardiological
-#' ggInterval_scatterMatrix(mydata[,1:3],aes(fill="black",alpha=0.2))
+#' mydata <- ggInterval::facedata
+#' ggInterval_scatterMatrix(mydata[, 1:3])
+#' ggInterval_scatterMatrix(
+#'   mydata[, 1:3],
+#'   aes(fill = "black", alpha = 0.2),
+#'   borderLinewidth = 0.15
+#' )
 #' @export
 ggInterval_scatterMatrix <- function(data = NULL,
                                  mapping = aes(NULL),
-                                 showLegend = FALSE) {
+                                 showLegend = FALSE,
+                                 borderLinewidth = 0.08) {
   #data preparing
   . <- NULL
+  if (!is.numeric(borderLinewidth) || length(borderLinewidth) != 1 ||
+      !is.finite(borderLinewidth) || borderLinewidth < 0) {
+    stop("ERROR : borderLinewidth must be a single non-negative number.")
+  }
   argsNum <- length(mapping)
   args <- lapply(mapping[1:argsNum], FUN = rlang::get_expr)
   this.x <- args$x
@@ -67,7 +64,7 @@ ggInterval_scatterMatrix <- function(data = NULL,
   p <- dim(iData)[2]
   n <- dim(iData)[1]
   numericData <- unlist(lapply(iData[, 1:p] , FUN = RSDA::is.sym.interval))
-  iData <- iData[, numericData]
+  iData <- iData[, numericData, drop = FALSE]
   
   #test big o
   if (p > 8 & p <= 20) {
@@ -149,7 +146,8 @@ ggInterval_scatterMatrix <- function(data = NULL,
       fill = .data$Concepts,
       alpha = 0.5
     ),
-    col = "black"
+    col = "black",
+    linewidth = borderLinewidth
   )
   allmapping <- as.list(structure(as.expression(c(
     usermapping, mymapping
@@ -172,7 +170,7 @@ ggInterval_scatterMatrix <- function(data = NULL,
       ),
       size = 12
     ) +
-    guides(colour = FALSE, alpha = FALSE) +
+    guides(colour = "none", alpha = "none") +
     facet_grid(.data$yv ~ .data$xv, scales = "free") +
     labs(x = "", y = "")
   
