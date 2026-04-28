@@ -101,94 +101,65 @@ ggInterval_corrplot(facedata, method = "BG", triangle = "lower")
 
 ## Example Graphics
 
-### Scatter Plot
+Representative figures generated from `LaTeX/S2_File_ggInterval_examples.R`.
 
-```r
-ggInterval_scatterplot(facedata, aes(x = AD, y = BC))
-```
-
-<p align="center">
-  <img src="man/figures/README-facedata-scatterplot.png" width="80%">
-</p>
-
-### Min-Max Plot
-
-```r
-ggInterval_MMplot(facedata, aes(x = AD))
-```
-
-<p align="center">
-  <img src="man/figures/README-facedata-MMplot.png" width="80%">
-</p>
-
-### Center-Range Plot
-
-```r
-ggInterval_CRplot(facedata, aes(x = AD))
-```
-
-<p align="center">
-  <img src="man/figures/README-facedata-CRplot.png" width="80%">
-</p>
-
-### Index Plot
-
-```r
-ggInterval_indexplot(facedata, aes(x = AD))
-```
-
-<p align="center">
-  <img src="man/figures/README-facedata-indexplot.png" width="80%">
-</p>
-
-### Index Image
-
-```r
-ggInterval_indexImage(facedata, aes(x = AD), full_strip = TRUE) +
-  coord_flip()
-```
-
-<p align="center">
-  <img src="man/figures/README-facedata-indexImage.png" width="80%">
-</p>
-
-### Boxplot
-
-```r
-ggInterval_boxplot(facedata, aes(x = AD))
-```
-
-<p align="center">
-  <img src="man/figures/README-facedata-boxplot.png" width="80%">
-</p>
-
-### Histogram
-
-```r
-ggInterval_hist(facedata, aes(x = AD), bins = 10)
-```
-
-<p align="center">
-  <img src="man/figures/README-facedata-hist.png" width="80%">
-</p>
-
-### Radar Plot
-
-```r
-ggInterval_radarplot(
-  facedata,
-  type = "quantile",
-  quantileNum = 5,
-  showLegend = TRUE,
-  base_circle = FALSE,
-  base_lty = 1,
-  Drift = 0
-)
-```
-
-<p align="center">
-  <img src="man/figures/README-facedata-radarplot.png" width="80%">
-</p>
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Interval Scatter Plot</strong><br>
+      <sub><code>ggInterval_scatterplot()</code></sub><br>
+      <img src="man/figures/README-s2-scatterplot.png" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <strong>Scatter Matrix</strong><br>
+      <sub><code>ggInterval_scatterMatrix()</code></sub><br>
+      <img src="man/figures/README-s2-scatter-matrix.png" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>2D Histogram Matrix</strong><br>
+      <sub><code>ggInterval_2DhistMatrix()</code></sub><br>
+      <img src="man/figures/README-s2-2dhist-matrix.png" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <strong>Index Image</strong><br>
+      <sub><code>ggInterval_indexImage()</code></sub><br>
+      <img src="man/figures/README-s2-index-image.png" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Customized Index Plot</strong><br>
+      <sub><code>ggInterval_indexplot()</code> with k-means groups</sub><br>
+      <img src="man/figures/README-s2-custom-index.png" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <strong>Radar Plot</strong><br>
+      <sub><code>ggInterval_radarplot()</code></sub><br>
+      <img src="man/figures/README-s2-radar.png" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>PCA Display</strong><br>
+      <sub><code>ggInterval_PCA()</code> / PCA score intervals</sub><br>
+      <img src="man/figures/README-s2-pca.png" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <strong>Correlation Heatmap</strong><br>
+      <sub><code>ggInterval_corrplot()</code></sub><br>
+      <img src="man/figures/README-s2-corrplot.png" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <strong>Interval-Valued Line Plot</strong><br>
+      <sub><code>ggInterval_lineplot()</code></sub><br>
+      <img src="man/figures/README-s2-lineplot.png" width="82%">
+    </td>
+  </tr>
+</table>
 
 ## Documentation
 
