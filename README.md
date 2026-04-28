@@ -108,7 +108,7 @@ ggInterval_scatterplot(facedata, aes(x = AD, y = BC))
 ```
 
 <p align="center">
-  <img src="man/figures/README-scatterplot.png" width="80%">
+  <img src="man/figures/README-facedata-scatterplot.png" width="80%">
 </p>
 
 ### Min-Max Plot
@@ -118,7 +118,7 @@ ggInterval_MMplot(facedata, aes(x = AD))
 ```
 
 <p align="center">
-  <img src="man/figures/README-MMplot.png" width="80%">
+  <img src="man/figures/README-facedata-MMplot.png" width="80%">
 </p>
 
 ### Center-Range Plot
@@ -128,7 +128,7 @@ ggInterval_CRplot(facedata, aes(x = AD))
 ```
 
 <p align="center">
-  <img src="man/figures/README-CRplot.png" width="80%">
+  <img src="man/figures/README-facedata-CRplot.png" width="80%">
 </p>
 
 ### Index Plot
@@ -138,7 +138,7 @@ ggInterval_indexplot(facedata, aes(x = AD))
 ```
 
 <p align="center">
-  <img src="man/figures/README-indexplot.png" width="80%">
+  <img src="man/figures/README-facedata-indexplot.png" width="80%">
 </p>
 
 ### Index Image
@@ -149,7 +149,7 @@ ggInterval_indexImage(facedata, aes(x = AD), full_strip = TRUE) +
 ```
 
 <p align="center">
-  <img src="man/figures/README-indexImage.png" width="80%">
+  <img src="man/figures/README-facedata-indexImage.png" width="80%">
 </p>
 
 ### Boxplot
@@ -159,7 +159,7 @@ ggInterval_boxplot(facedata, aes(x = AD))
 ```
 
 <p align="center">
-  <img src="man/figures/README-boxplot.png" width="80%">
+  <img src="man/figures/README-facedata-boxplot.png" width="80%">
 </p>
 
 ### Histogram
@@ -169,7 +169,7 @@ ggInterval_hist(facedata, aes(x = AD), bins = 10)
 ```
 
 <p align="center">
-  <img src="man/figures/README-hist.png" width="80%">
+  <img src="man/figures/README-facedata-hist.png" width="80%">
 </p>
 
 ### Radar Plot
@@ -187,7 +187,7 @@ ggInterval_radarplot(
 ```
 
 <p align="center">
-  <img src="man/figures/README-radarplot.png" width="80%">
+  <img src="man/figures/README-facedata-radarplot.png" width="80%">
 </p>
 
 ## Documentation
