@@ -50,24 +50,24 @@ remotes::install_github("hanmingwu1103/ggInterval")
 ```r
 library(ggInterval)
 
-# Convert classical data to interval-valued data
-iris_i <- classic2sym(iris, groupby = "Species")$intervalData
+# Load the built-in interval-valued face measurements
+data(facedata)
 
 # Scatter plot
-ggInterval_scatterplot(iris_i, aes(x = Petal.Length, y = Petal.Width))
+ggInterval_scatterplot(facedata, aes(x = AD, y = BC))
 
 # Histogram
-ggInterval_hist(iris_i, aes(x = Petal.Length), method = "equal-bin")
+ggInterval_hist(facedata, aes(x = AD), method = "equal-bin", bins = 10)
 
 # 2D histogram with non-equidistant bins
 ggInterval_2Dhist(
-  iris_i,
-  aes(x = Petal.Length, y = Sepal.Length),
+  facedata,
+  aes(x = AD, y = BC),
   method = "unequal-bin"
 )$plot
 
 # Correlation heatmap
-ggInterval_corrplot(iris_i, method = "BG", triangle = "lower")
+ggInterval_corrplot(facedata, method = "BG", triangle = "lower")
 ```
 
 ## Main Functions
@@ -104,7 +104,7 @@ ggInterval_corrplot(iris_i, method = "BG", triangle = "lower")
 ### Scatter Plot
 
 ```r
-ggInterval_scatterplot(iris_i, aes(x = Petal.Length, y = Petal.Width))
+ggInterval_scatterplot(facedata, aes(x = AD, y = BC))
 ```
 
 <p align="center">
@@ -114,7 +114,7 @@ ggInterval_scatterplot(iris_i, aes(x = Petal.Length, y = Petal.Width))
 ### Min-Max Plot
 
 ```r
-ggInterval_MMplot(iris_i, aes(Sepal.Length))
+ggInterval_MMplot(facedata, aes(x = AD))
 ```
 
 <p align="center">
@@ -124,7 +124,7 @@ ggInterval_MMplot(iris_i, aes(Sepal.Length))
 ### Center-Range Plot
 
 ```r
-ggInterval_CRplot(iris_i, aes(Sepal.Length))
+ggInterval_CRplot(facedata, aes(x = AD))
 ```
 
 <p align="center">
@@ -134,7 +134,7 @@ ggInterval_CRplot(iris_i, aes(Sepal.Length))
 ### Index Plot
 
 ```r
-ggInterval_indexplot(iris_i, aes(x = Sepal.Width))
+ggInterval_indexplot(facedata, aes(x = AD))
 ```
 
 <p align="center">
@@ -144,7 +144,8 @@ ggInterval_indexplot(iris_i, aes(x = Sepal.Width))
 ### Index Image
 
 ```r
-ggInterval_indexImage(iris_i, aes(x = Sepal.Length))
+ggInterval_indexImage(facedata, aes(x = AD), full_strip = TRUE) +
+  coord_flip()
 ```
 
 <p align="center">
@@ -154,7 +155,7 @@ ggInterval_indexImage(iris_i, aes(x = Sepal.Length))
 ### Boxplot
 
 ```r
-ggInterval_boxplot(iris_i, aes(x = Sepal.Length))
+ggInterval_boxplot(facedata, aes(x = AD))
 ```
 
 <p align="center">
@@ -164,7 +165,7 @@ ggInterval_boxplot(iris_i, aes(x = Sepal.Length))
 ### Histogram
 
 ```r
-ggInterval_hist(iris_i, aes(x = Petal.Length))
+ggInterval_hist(facedata, aes(x = AD), bins = 10)
 ```
 
 <p align="center">
@@ -174,7 +175,15 @@ ggInterval_hist(iris_i, aes(x = Petal.Length))
 ### Radar Plot
 
 ```r
-ggInterval_radarplot(iris_i, plotPartial = 1:3, showLegend = TRUE)
+ggInterval_radarplot(
+  facedata,
+  type = "quantile",
+  quantileNum = 5,
+  showLegend = TRUE,
+  base_circle = FALSE,
+  base_lty = 1,
+  Drift = 0
+)
 ```
 
 <p align="center">
