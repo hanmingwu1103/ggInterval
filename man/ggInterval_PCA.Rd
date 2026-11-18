@@ -25,7 +25,11 @@ its inner object}
 
 \item{concepts_group}{color with each group of concept}
 
-\item{poly}{if plot a poly result}
+\item{poly}{Logical. If \code{TRUE}, draw the projected edges of each
+hyperrectangle (polytope display) instead of the bounding rectangles. This
+display needs all \eqn{2^p} distinct vertices of every observation; data
+with zero-width intervals or vertices shared between observations give an
+error.}
 
 \item{adjust}{adjust sign of the principal component}
 
@@ -37,13 +41,10 @@ its inner object}
 overlapping labels when needed.}
 }
 \value{
-A ggplot object for PC1, PC2, and interval scores with related outputs.
-\itemize{
-  \item scores_interval - The interval scores after PCA.
-  \item ggplotPCA - a ggplot object with x-axis and y-axis are PC1 and
-  PC2.
-  \item others - others are the returns values of princomp.
-}
+The \code{princomp} result (class \code{"princomp"}), augmented
+with \code{$scores_interval}, a symbolic table of interval scores, and
+\code{$ggplotPCA}, the ggplot of PC1 and PC2. Vertex coordinates are
+standardized column-wise with \code{scale} before \code{princomp}.
 }
 \description{
 ggInterval_PCA performs a principal components

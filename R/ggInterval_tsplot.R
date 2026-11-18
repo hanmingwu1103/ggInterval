@@ -19,6 +19,10 @@
 #' @param add_line Logical; if TRUE (default), connect interval centers with a
 #' line. Set FALSE when adding a customized line layer with
 #' \code{geom_line(...)}.
+#' @details The financial example uses \code{TTR::ttrc}, a randomly generated
+#' series that does not represent an actual security. The built-in dataset
+#' \code{stock.data.LH} stores its January--March 1985 low-high intervals and
+#' auxiliary columns as a directly inspectable symbolic table.
 #' @return Return a ggplot2 object.
 #' @usage ggInterval_lineplot(data = NULL, mapping = aes(NULL),
 #' barWidth = 0.5, add_line = TRUE)

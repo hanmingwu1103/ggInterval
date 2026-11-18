@@ -221,7 +221,7 @@ classic2sym <- function(data = NULL,
         groupby <- as.character(groupby)[1]
       }
       
-      d <- RSDA::classic.to.sym(data, groupby)
+      d <- RSDA::classic.to.sym(data, dplyr::all_of(groupby))
       d <- buildRowName(data, d, groupby)
       #d <- tibble::as_tibble(d)
 

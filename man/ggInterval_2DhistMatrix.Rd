@@ -51,12 +51,30 @@ mean value within the matrix. Alternatives are \code{"nonzero"} and
 \item{addFreq}{Deprecated alias for \code{cell_labels}.}
 }
 \value{
-Return a ggplot2 object.
+A ggplot whose \code{$data} holds panel cell data, including
+\code{f}, \code{p}, \code{h}, \code{area}, \code{xv}, \code{yv}, and
+\code{isPlot}. Rows with \code{isPlot = TRUE} are off-diagonal cells.
 }
 \description{
 Visualize all continuous interval-valued variables with a
 matrix of 2D histograms. Each off-diagonal panel shows a 2D histogram for
 a pair of variables, and each diagonal panel displays the variable name.
+}
+\details{
+Cell weighted frequency \code{f} is the sum of products of axis
+overlap fractions and sums to n observations per panel. Relative frequency
+is \code{p = f/n}; density is \code{h = p/area}, so sum(h * area) = 1.
+Bins are left-closed and right-open, with the final right endpoint included.
+A point interval contributes unit mass to exactly one bin on each axis.
+Equal-bin breaks are A + g (B - A) / r, g = 0, ..., r, using exact global
+endpoints A and B. A constant axis is padded by max(abs(A) * 0.05, 0.5)
+on each side (0.5 at zero). Endpoints must be finite, non-missing and ordered.
+Unequal-bin breaks use sorted unique endpoints; tau merges chains of gaps
+smaller than tau, retaining outer endpoints and averaging interior groups.
+Constant unequal-bin axes use the same padding. Rounded bracket labels do
+not indicate endpoint ownership; allocations use unrounded breaks.
+In equal-bin mode xBins and yBins must each be finite numeric positive integer
+scalars, and their sum must not exceed 100. Unequal-bin mode ignores them.
 }
 \examples{
 ggInterval_2DhistMatrix(

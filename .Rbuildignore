@@ -16,3 +16,4 @@
 ^ggInterval\.Rcheck$
 ^ggInterval_.*\.tar\.gz$
 ^ggInterval_.*\.zip$
+^data-raw$

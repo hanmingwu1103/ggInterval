@@ -28,16 +28,32 @@
 #' @param removeZero Whether remove data whose frequency is equal to zero.
 #' @param cell_labels Logical. If \code{TRUE}, add frequency labels to cells.
 #' @param label_rule Rule used when \code{cell_labels = TRUE}. The default
-#' \code{"above-mean"} shows only cells whose frequencies exceed the mean
-#' cell frequency. Alternatives are \code{"nonzero"} and \code{"all"}.
+#' \code{"above-mean"} shows only cells whose displayed values exceed the mean
+#' cell value. Alternatives are \code{"nonzero"} and \code{"all"}.
 #' @param addFreq Deprecated alias for \code{cell_labels}.
-#' @return Return a list containing a ggplot2 object and the corresponding
-#' frequency table.
+#' @return A list with \code{$plot} and a \code{Table (x, y)} data frame.
+#' The plot data contain unrounded cell metrics; table cells are rounded to
+#' three decimals and endpoint labels to two decimals. Frequency and probability
+#' table margins sum the rounded cells.
+#' @details Cell weighted frequency \code{f} is the sum of products of axis
+#' overlap fractions and sums to n observations per panel. Relative frequency
+#' is \code{p = f/n}; density is \code{h = p/area}, so sum(h * area) = 1.
+#' Bins are left-closed and right-open, with the final right endpoint included.
+#' A point interval contributes unit mass to exactly one bin on each axis.
+#' Equal-bin breaks are A + g (B - A) / r, g = 0, ..., r, using exact global
+#' endpoints A and B. A constant axis is padded by max(abs(A) * 0.05, 0.5)
+#' on each side (0.5 at zero). Endpoints must be finite, non-missing and ordered.
+#' Unequal-bin breaks use sorted unique endpoints; tau merges chains of gaps
+#' smaller than tau, retaining outer endpoints and averaging interior groups.
+#' Constant unequal-bin axes use the same padding. Rounded bracket labels do
+#' not indicate endpoint ownership; allocations use unrounded breaks.
+#' In equal-bin mode xBins and yBins must each be finite numeric positive integer
+#' scalars, and their sum must not exceed 200. Unequal-bin mode ignores them.
 #' @usage ggInterval_2Dhist(data = NULL, mapping = aes(NULL),
 #' method = "equal-bin", xBins = 14, yBins = 16,
 #' display = "p", palette = "Blues", direction = 1, tau = 0,
-#' removeZero = FALSE,
-#' cell_labels = FALSE, label_rule = "above-mean", addFreq = NULL)
+#' removeZero = FALSE, cell_labels = FALSE, label_rule = "above-mean",
+#' addFreq = NULL)
 #' @examples
 #' ggInterval_2Dhist(oils, aes(x = GRA, y = FRE),
 #'   xBins = 5, yBins = 5,
@@ -48,7 +64,8 @@
 #' ggInterval_2Dhist(oils, aes(x = GRA, y = FRE),
 #'   method = "unequal-bin",
 #'   display = "p",
-#'   palette = "Blues")
+#'   palette = "Blues",
+#'   tau = 0.5)
 #'
 #' @export
 ggInterval_2Dhist <- function(data = NULL,
@@ -69,6 +86,11 @@ ggInterval_2Dhist <- function(data = NULL,
   label_rule <- match.arg(label_rule, c("above-mean", "nonzero", "all"))
   if (!is.null(addFreq)) {
     cell_labels <- addFreq
+  }
+
+  if (method == "equal-bin") {
+    validate_hist_bins(xBins, "xBins")
+    validate_hist_bins(yBins, "yBins")
   }
 
   if (method == "equal-bin" && xBins + yBins > 200) {

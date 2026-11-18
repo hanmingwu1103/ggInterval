@@ -37,6 +37,12 @@ axis. A line can connect the centers of intervals at each position, with
 crossbars or errorbars indicating the interval range. When the horizontal
 axis is time, the display becomes an interval-valued time-series plot.
 }
+\details{
+The financial example uses \code{TTR::ttrc}, a randomly generated
+series that does not represent an actual security. The built-in dataset
+\code{stock.data.LH} stores its January--March 1985 low-high intervals and
+auxiliary columns as a directly inspectable symbolic table.
+}
 \examples{
 \donttest{
 if (requireNamespace("TTR", quietly = TRUE)) {

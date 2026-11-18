@@ -11,7 +11,19 @@ An object of class \code{symbolic_tbl} (inherits from \code{tbl_df}, \code{tbl},
 data(Environment)
 }
 \description{
-Environment interval and modal data example.
+Environmental-questionnaire data with 14 symbolic objects and
+17 variables: 13 interval variables (CONTROL through VEHICLE) and four modal
+variables (URBANICITY, INCOMELEVEL, EDUCATION, REGIONDEVELOPME).
+}
+\details{
+Stored values match the SODAS example distributed with Umbleja,
+Ichino and Yaguchi (2020). Source object identifiers 1241, 1242, 1441, 1442,
+1641, 1642, 1741, 2241, 2242, 2441, 2442, 2641, 2642, 2741 correspond in
+order to rows 1--14. Modal categories are numeric codes without a codebook.
+Since version 0.2.6 the INCOMELEVEL category labels follow the order of the
+SODAS source files, 25, 75, 50, 90, 100. Earlier versions listed the labels
+as 25, 50, 75, 90, 100 while storing the proportions in the source order, so
+the labels 50 and 75 were interchanged; the proportions are unchanged.
 }
 \examples{
 data(Environment)
@@ -21,5 +33,11 @@ ggInterval_radarplot(Environment,
  base_circle = TRUE,
  base_lty = 2,
  addText = FALSE)
+}
+\references{
+Umbleja, K., Ichino, M. and Yaguchi, H. (2020). Improving
+symbolic data visualization for pattern recognition and knowledge
+discovery. \emph{Visual Informatics}, 4(1), 23--31.
+\doi{10.1016/j.visinf.2019.12.003}.
 }
 \keyword{datasets}

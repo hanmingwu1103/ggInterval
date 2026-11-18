@@ -49,8 +49,9 @@ observations.}
 intervals, \code{"rect"} for rectangle intervals, or \code{"quantile"}
 for the quantile-radar display.}
 
-\item{quantileNum}{Number of quantile layers when
-\code{type = "quantile"}.}
+\item{quantileNum}{Integer from 2 to 10 controlling the internal quantile
+grid when \code{type = "quantile"}. A value of \eqn{q} produces
+\eqn{q+1} adjacent quantile bands; see Details.}
 
 \item{Drift}{Drift term controlling where the radar values begin.}
 
@@ -64,8 +65,20 @@ Visualize interval-valued and mixed symbolic data with a
 radar-style display. Interval-valued variables are represented through
 their lower and upper bounds, while modal multivalued variables can be
 shown with stacked bars. When \code{type = "quantile"}, the function
-summarizes all observations of each interval-valued variable through
-nested empirical quantile bands.
+pools the lower and upper endpoints of each interval-valued variable and
+displays bands defined by adjacent internal empirical quantiles. Each axis
+is normalized over its retained quantile range.
+}
+\details{
+For \eqn{q =} \code{quantileNum}, the quantile display pools all lower and
+upper endpoints for each variable. It retains empirical quantiles at
+\eqn{k/(q+3)}, for \eqn{k=1,\ldots,q+2}, rounds them to two decimal
+places, and pairs adjacent quantiles to form \eqn{q+1} bands. Each radar
+axis is normalized over this retained quantile range. The bands summarize
+the relative spacing of pooled-endpoint quantiles, not distributions
+within individual intervals or nested central-coverage intervals. They
+are not confidence bands, and the normalized axes do not directly compare
+absolute locations or spreads across variables.
 }
 \examples{
 \donttest{

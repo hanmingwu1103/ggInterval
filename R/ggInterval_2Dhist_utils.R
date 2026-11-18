@@ -22,6 +22,40 @@ hist2d_padding <- function(value) {
   max(abs(value) * 0.05, 0.5)
 }
 
+validate_hist_bins <- function(value, arg_name) {
+  if (!is.numeric(value) || length(value) != 1 || !is.finite(value) ||
+      value < 1 || value != round(value)) {
+    stop(paste0("ERROR : ", arg_name, " must be a finite positive integer scalar."))
+  }
+}
+
+validate_hist_endpoints <- function(lower, upper) {
+  if (!length(lower) || length(lower) != length(upper) ||
+      any(!is.finite(lower)) || any(!is.finite(upper))) {
+    stop("ERROR : Histogram endpoints must be finite and non-missing.")
+  }
+  if (any(upper < lower)) {
+    stop("ERROR : Histogram upper endpoints must not be below lower endpoints.")
+  }
+}
+
+build_hist_equal_breaks <- function(lower, upper, bins) {
+  validate_hist_bins(bins, "bins")
+  validate_hist_endpoints(lower, upper)
+  lower <- min(lower)
+  upper <- max(upper)
+  if (lower == upper) {
+    pad <- hist2d_padding(lower)
+    lower <- lower - pad
+    upper <- upper + pad
+  }
+  breaks <- seq(lower, upper, length.out = bins + 1)
+  if (any(!is.finite(breaks)) || any(diff(breaks) <= 0)) {
+    stop("ERROR : Histogram breaks must be finite and strictly increasing.")
+  }
+  breaks
+}
+
 merge_hist2d_breaks <- function(breaks, tau) {
   tau <- as.numeric(tau)
   if (length(tau) != 1 || !is.finite(tau) || tau < 0) {
@@ -68,18 +102,12 @@ merge_hist2d_breaks <- function(breaks, tau) {
 build_hist2d_breaks <- function(interval_column, bins, method, tau = 0) {
   mins <- interval_column$min
   maxs <- interval_column$max
+  validate_hist_endpoints(mins, maxs)
   lower <- min(mins)
   upper <- max(maxs)
 
   if (method == "equal-bin") {
-    if (bins < 1) {
-      stop("ERROR : The number of bins must be at least 1.")
-    }
-    if (lower == upper) {
-      pad <- hist2d_padding(lower)
-      return(seq(lower - pad, upper + pad, length.out = bins + 1))
-    }
-    return(seq(lower, upper, length.out = bins + 1))
+    return(build_hist_equal_breaks(mins, maxs, bins))
   }
 
   breaks <- sort(unique(c(mins, maxs)))
@@ -92,11 +120,17 @@ build_hist2d_breaks <- function(interval_column, bins, method, tau = 0) {
 }
 
 interval_overlap_ratio <- function(lower, upper, breaks) {
+  validate_hist_endpoints(lower, upper)
   left <- breaks[-length(breaks)]
   right <- breaks[-1]
 
-  if (upper - lower == 0) {
-    return(as.numeric(lower >= left & lower <= right))
+  if (upper == lower) {
+    allocation <- numeric(length(left))
+    index <- findInterval(lower, breaks, rightmost.closed = TRUE)
+    if (index >= 1 && index <= length(left)) {
+      allocation[index] <- 1
+    }
+    return(allocation)
   }
 
   overlap <- pmin(right, upper) - pmax(left, lower)

@@ -17,19 +17,20 @@
 #' @param plot Boolean variable,Auto plot (if TRUE).It can also plot by
 #' its inner object
 #' @param concepts_group color with each group of concept
-#' @param poly if plot a poly result
+#' @param poly Logical. If \code{TRUE}, draw the projected edges of each
+#' hyperrectangle (polytope display) instead of the bounding rectangles. This
+#' display needs all \eqn{2^p} distinct vertices of every observation; data
+#' with zero-width intervals or vertices shared between observations give an
+#' error.
 #' @param adjust adjust sign of the principal component
 #' @param showLabels Logical. If \code{TRUE}, label interval scores in the plot.
 #' @param labelSize Numeric text size used when \code{showLabels = TRUE}.
 #' @param checkOverlap Logical. Passed to \code{geom_text()} to suppress
 #' overlapping labels when needed.
-#' @return A ggplot object for PC1, PC2, and interval scores with related outputs.
-#' \itemize{
-#'   \item scores_interval - The interval scores after PCA.
-#'   \item ggplotPCA - a ggplot object with x-axis and y-axis are PC1 and
-#'   PC2.
-#'   \item others - others are the returns values of princomp.
-#' }
+#' @return The \code{princomp} result (class \code{"princomp"}), augmented
+#' with \code{$scores_interval}, a symbolic table of interval scores, and
+#' \code{$ggplotPCA}, the ggplot of PC1 and PC2. Vertex coordinates are
+#' standardized column-wise with \code{scale} before \code{princomp}.
 #' @usage ggInterval_PCA(data = NULL,mapping = aes(NULL),plot=TRUE,
 #'                       concepts_group=NULL, poly = FALSE, adjust = TRUE,
 #'                       showLabels = TRUE, labelSize = 3,
@@ -114,6 +115,12 @@ ggInterval_PCA <- function(data = NULL,
   
   #remove repeat value
   m <- m[!duplicated(as.data.frame(m[, 1:p])), ]
+  if (poly && nrow(m) != n * 2^p) {
+    stop(paste0("The polytope display (poly = TRUE) needs all 2^p distinct vertices ",
+                "of every observation, but duplicated vertices were removed ",
+                "(zero-width intervals or vertices shared between observations). ",
+                "Use poly = FALSE for these data."), call. = FALSE)
+  }
   m[, 1:p] <- apply(m[, 1:p], 2, scale)
   
   #start PCA
@@ -279,22 +286,20 @@ build_PCA_poly_data <- function(scores, m, n, p, no.comp, group) {
   polyData <- scores[, 1:no.comp]
   cp <- connectPoint(m[, 1:p], n, p)
   Ni <- cp[length(cp)]
-  num <- dim(cp)[1]
-  cpData <- NULL
   if (is.null(group)) {
     group <- rep(1, n)
   }
-  for (i in 1:num) {
-    Hi <- scores[((cp[i, 1] - 1) * Ni + 1):(cp[i, 1] * Ni), ]
-    cpData <- rbind(cpData,
-                    data.frame(
-                      x1 = Hi[cp[i, 2], 1],
-                      y1 = Hi[cp[i, 2], 2],
-                      x2 = Hi[cp[i, 3], 1],
-                      y2 = Hi[cp[i, 3], 2],
-                      Concepts_Group = group[cp[i, 1]]
-                    ))
-  }
+  # Row (k - 1) * Ni + i of `scores` is vertex i of observation k, so the
+  # edge table is built in one step instead of one rbind() per edge.
+  first <- (cp[, 1] - 1) * Ni + cp[, 2]
+  second <- (cp[, 1] - 1) * Ni + cp[, 3]
+  cpData <- data.frame(
+    x1 = unname(scores[first, 1]),
+    y1 = unname(scores[first, 2]),
+    x2 = unname(scores[second, 1]),
+    y2 = unname(scores[second, 2]),
+    Concepts_Group = group[cp[, 1]]
+  )
   cpData$Concepts_Group <- as.factor(cpData$Concepts_Group)
   polyData <- as.data.frame(polyData)
   colnames(polyData) <- paste0("PC", 1:no.comp)

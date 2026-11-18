@@ -51,6 +51,19 @@ Supported interval-valued methods are:
   \item \code{"BD"}: Billard-Diday covariance.
   \item \code{"BG"}: Bertrand-Goupil covariance.
 }
+
+\code{"BG"} is retained as a software method label. The implemented
+covariance follows Irpino and Verde (2015), Equation (24), where it is
+attributed to Bertrand and Goupil. The original Bertrand--Goupil chapter
+gives univariate means and variances but does not define a covariance or
+correlation.
+For \eqn{n} paired intervals with centers \eqn{c_{Xi}} and \eqn{c_{Yi}},
+the implemented covariance is
+\deqn{C_{BG}(X,Y) = \frac{1}{n}\sum_{i=1}^{n}(c_{Xi}-\bar{c}_X)(c_{Yi}-\bar{c}_Y).}{C_BG(X,Y) = sum((c_X - mean(c_X)) * (c_Y - mean(c_Y))) / n.}
+Thus, \code{method = "BG"} uses divisor \eqn{n}, whereas
+\code{method = "centers"} uses the ordinary sample covariance of the
+centers with divisor \eqn{n-1}. The \code{"BG"} option does not implement
+the Wasserstein-based covariance proposed by Irpino and Verde (2015).
 }
 \references{
 Bertrand, Patrice and Goupil, Francoise (2000). Descriptive Statistics for
@@ -65,9 +78,16 @@ Billard, Lynne (2008). Sample covariance functions for complex quantitative
 data. In \emph{Proceedings of the World IASC Conference}, pp. 157--163,
 Yokohama, Japan.
 
+Irpino, Antonio and Verde, Rosanna (2015). Basic Statistics for
+Distributional Symbolic Variables: A New Metric-based Approach.
+\emph{Advances in Data Analysis and Classification}, 9, 143--175.
+
 Rodriguez-Rojas, Oldemar (2000). \emph{Classification et modeles lineaires
 en analyse des donnees symboliques}. PhD thesis, Universite Paris IX
 Dauphine.
+}
+\seealso{
+\code{\link{cor}}
 }
 \keyword{Covariance}
 \keyword{Symbolic}

@@ -22,6 +22,19 @@
 #' }
 #' For \code{"B"}, \code{"BD"}, and \code{"BG"}, the denominator uses the
 #' corresponding method-matched standard deviation.
+#'
+#' \code{"BG"} is retained as a software method label. Its covariance follows
+#' Irpino and Verde (2015), Equation (24), where it is attributed to Bertrand
+#' and Goupil. The original Bertrand--Goupil chapter gives univariate means
+#' and variances but does not define a covariance or correlation.
+#' The package normalizes this covariance by its self-covariances:
+#' \deqn{R_{BG}(X,Y) = \frac{C_{BG}(X,Y)}{\sqrt{C_{BG}(X,X) C_{BG}(Y,Y)}}.}{R_BG(X,Y) = C_BG(X,Y) / sqrt(C_BG(X,X) * C_BG(Y,Y)).}
+#' Here \eqn{C_{BG}} is the covariance of the interval centers with divisor
+#' \eqn{n}; see \code{\link{cov}}. When both center variances are positive,
+#' this equals the Pearson correlation of the interval centers.
+#' This normalization differs from Equation (30) of Irpino and Verde (2015),
+#' which uses the product \eqn{S_X S_Y} of the mixture standard deviations.
+#' The \code{"BG"} option does not implement their Wasserstein-based correlation.
 #' @references
 #' Bertrand, Patrice and Goupil, Francoise (2000). Descriptive Statistics for
 #' Symbolic Data. In Hans-Hermann Bock and Edwin Diday (eds.),
@@ -35,10 +48,15 @@
 #' data. In \emph{Proceedings of the World IASC Conference}, pp. 157--163,
 #' Yokohama, Japan.
 #'
+#' Irpino, Antonio and Verde, Rosanna (2015). Basic Statistics for
+#' Distributional Symbolic Variables: A New Metric-based Approach.
+#' \emph{Advances in Data Analysis and Classification}, 9, 143--175.
+#'
 #' Rodriguez-Rojas, Oldemar (2000). \emph{Classification et modeles lineaires
 #' en analyse des donnees symboliques}. PhD thesis, Universite Paris IX
 #' Dauphine.
 #'
+#' @seealso \code{\link{cov}}
 #' @keywords Symbolic correlation
 #' @export
 cor <- function(x, ...) {
@@ -114,6 +132,19 @@ cor.symbolic_interval <- function(x,
 #'   \item \code{"BD"}: Billard-Diday covariance.
 #'   \item \code{"BG"}: Bertrand-Goupil covariance.
 #' }
+#'
+#' \code{"BG"} is retained as a software method label. The implemented
+#' covariance follows Irpino and Verde (2015), Equation (24), where it is
+#' attributed to Bertrand and Goupil. The original Bertrand--Goupil chapter
+#' gives univariate means and variances but does not define a covariance or
+#' correlation.
+#' For \eqn{n} paired intervals with centers \eqn{c_{Xi}} and \eqn{c_{Yi}},
+#' the implemented covariance is
+#' \deqn{C_{BG}(X,Y) = \frac{1}{n}\sum_{i=1}^{n}(c_{Xi}-\bar{c}_X)(c_{Yi}-\bar{c}_Y).}{C_BG(X,Y) = sum((c_X - mean(c_X)) * (c_Y - mean(c_Y))) / n.}
+#' Thus, \code{method = "BG"} uses divisor \eqn{n}, whereas
+#' \code{method = "centers"} uses the ordinary sample covariance of the
+#' centers with divisor \eqn{n-1}. The \code{"BG"} option does not implement
+#' the Wasserstein-based covariance proposed by Irpino and Verde (2015).
 #' @references
 #' Bertrand, Patrice and Goupil, Francoise (2000). Descriptive Statistics for
 #' Symbolic Data. In Hans-Hermann Bock and Edwin Diday (eds.),
@@ -127,10 +158,15 @@ cor.symbolic_interval <- function(x,
 #' data. In \emph{Proceedings of the World IASC Conference}, pp. 157--163,
 #' Yokohama, Japan.
 #'
+#' Irpino, Antonio and Verde, Rosanna (2015). Basic Statistics for
+#' Distributional Symbolic Variables: A New Metric-based Approach.
+#' \emph{Advances in Data Analysis and Classification}, 9, 143--175.
+#'
 #' Rodriguez-Rojas, Oldemar (2000). \emph{Classification et modeles lineaires
 #' en analyse des donnees symboliques}. PhD thesis, Universite Paris IX
 #' Dauphine.
 #'
+#' @seealso \code{\link{cor}}
 #' @keywords Symbolic Covariance
 #' @export
 cov <- function(x, ...) {
@@ -399,13 +435,21 @@ pkg.env$rawData <- NULL
 #' @title scale for symbolic data table
 #' @description scale for symbolic data table
 #' @importFrom RSDA is.sym.interval
-#' @param x A ggInterval object. It can also be either RSDA object or
-#' classical data frame, which will be automatically convert to ggInterval
-#' data.
+#' @param x A symbolic table, symbolic interval vector, or numeric object.
 #' @param center same as base::scale, either a logical value or numeric-alike vector of length equal to the number of columns of x, where nmeric-alike means that as.numeric(.) will be applied successfully if is.numeric(.) is not true.
 #' @param scale same as base::scale, either a logical value or a numeric-alike vector of length equal to the number of columns of x.
 #' @param ... Used by other R function.
-#' @return Return a scale ggInterval object.
+#' @return For a symbolic table, a \code{ggInterval} object; use
+#' \code{$intervalData} to access the scaled data. Non-interval columns pass
+#' through unchanged. For a symbolic interval vector, a symbolic interval.
+#' @details For each interval column, \code{scale.symbolic_tbl} pools its n
+#' lower and n upper endpoints and standardizes these 2n values using base
+#' \code{scale}, with centering and scaling both TRUE.
+#' \code{scale.symbolic_interval} transforms each endpoint by
+#' (endpoint - mean(x)) / sd(x), where \code{mean} and \code{sd} are the
+#' symbolic-interval methods dispatched for \code{x} (with ggInterval loaded,
+#' \code{sd} is this package's Billard formula). The \code{center} and
+#' \code{scale} arguments are honoured only by the default (numeric) method.
 #' @examples
 #'
 #' #For all interval-valued

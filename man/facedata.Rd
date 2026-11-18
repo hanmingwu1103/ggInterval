@@ -41,6 +41,9 @@ data('facedata')
 }
 \description{
 Symbolic data matrix with all the variables of interval type.
+The 27 rows are nine subjects (FRA, HUS, INC, ISA, JPL, KHA, LOT, PHI,
+ROM) with three image sequences per subject; AD, BC, AH, DH, EH and GH are six
+positive-width interval variables.
 }
 \examples{
 \donttest{
@@ -49,6 +52,11 @@ ggInterval_hist(facedata, aes(x = AD))
 }
 }
 \references{
+Arce Garro, Jorge and Rodr\enc{í}{i}guez Rojas, Oldemar (2019). Optimized
+dimensionality reduction methods for interval-valued variables and their
+application to facial recognition. \emph{Entropy}, 21(10), 1016, pp. 9--10.
+\doi{10.3390/e21101016}
+
 Billard, Lynne and Diday, Edwin (2006).
 \emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
 Chichester, UK: John Wiley and Sons.

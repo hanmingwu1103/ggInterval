@@ -12,6 +12,9 @@
 #' If specified and inherit. aes = TRUE (the default),
 #' it is combined with the default mapping at the top level of
 #' the plot. You must supply mapping if there is no plot mapping.
+#' Existing default rectangle mappings take precedence over duplicated user
+#' mappings. For a constant rectangle transparency, supply \code{alpha = 0.2}
+#' outside \code{aes()} through \code{...}.
 #' @param showLabels Logical. If \code{TRUE}, add row labels to the rectangles.
 #' @param labelSize Numeric text size used when \code{showLabels = TRUE}.
 #' @param labelPosition Character label position used when
@@ -41,7 +44,7 @@
 #'   checkOverlap = TRUE,
 #'   col = "black"
 #' )
-#' p <- ggInterval_scatterplot(facedata[1:10, ], aes(x = AD, y = BC, alpha = 0.2))
+#' p <- ggInterval_scatterplot(facedata[1:10, ], aes(x = AD, y = BC))
 #' p + scale_fill_manual(
 #'   labels = rownames(facedata)[1:10],
 #'   values = rainbow(10),
@@ -177,6 +180,8 @@ ggInterval_scatterplot <- function(data = NULL,
       alpha = 0.5
     )
     if (length(usermapping) != 0) {
+      # Keep the existing first-mapping precedence without duplicate aesthetics.
+      usermapping <- usermapping[!names(usermapping) %in% names(mapping_rect)]
       mapping_rect <- structure(c(mapping_rect, usermapping), class = "uneval")
     }
     if (!is.null(fill_value)) {

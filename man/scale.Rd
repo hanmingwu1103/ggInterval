@@ -16,9 +16,7 @@ scale(x, ...)
 \method{scale}{symbolic_interval}(x, ...)
 }
 \arguments{
-\item{x}{A ggInterval object. It can also be either RSDA object or
-classical data frame, which will be automatically convert to ggInterval
-data.}
+\item{x}{A symbolic table, symbolic interval vector, or numeric object.}
 
 \item{...}{Used by other R function.}
 
@@ -27,10 +25,22 @@ data.}
 \item{scale}{same as base::scale, either a logical value or a numeric-alike vector of length equal to the number of columns of x.}
 }
 \value{
-Return a scale ggInterval object.
+For a symbolic table, a \code{ggInterval} object; use
+\code{$intervalData} to access the scaled data. Non-interval columns pass
+through unchanged. For a symbolic interval vector, a symbolic interval.
 }
 \description{
 scale for symbolic data table
+}
+\details{
+For each interval column, \code{scale.symbolic_tbl} pools its n
+lower and n upper endpoints and standardizes these 2n values using base
+\code{scale}, with centering and scaling both TRUE.
+\code{scale.symbolic_interval} transforms each endpoint by
+(endpoint - mean(x)) / sd(x), where \code{mean} and \code{sd} are the
+symbolic-interval methods dispatched for \code{x} (with ggInterval loaded,
+\code{sd} is this package's Billard formula). The \code{center} and
+\code{scale} arguments are honoured only by the default (numeric) method.
 }
 \examples{
 

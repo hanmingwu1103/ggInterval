@@ -4,8 +4,9 @@
 #' radar-style display. Interval-valued variables are represented through
 #' their lower and upper bounds, while modal multivalued variables can be
 #' shown with stacked bars. When \code{type = "quantile"}, the function
-#' summarizes all observations of each interval-valued variable through
-#' nested empirical quantile bands.
+#' pools the lower and upper endpoints of each interval-valued variable and
+#' displays bands defined by adjacent internal empirical quantiles. Each axis
+#' is normalized over its retained quantile range.
 #' @import ggplot2 ggforce
 #' @importFrom gridExtra marrangeGrob
 #' @importFrom RSDA is.sym.interval
@@ -30,8 +31,9 @@
 #' @param type Radar representation. Use \code{"default"} for polygon
 #' intervals, \code{"rect"} for rectangle intervals, or \code{"quantile"}
 #' for the quantile-radar display.
-#' @param quantileNum Number of quantile layers when
-#' \code{type = "quantile"}.
+#' @param quantileNum Integer from 2 to 10 controlling the internal quantile
+#' grid when \code{type = "quantile"}. A value of \eqn{q} produces
+#' \eqn{q+1} adjacent quantile bands; see Details.
 #' @param Drift Drift term controlling where the radar values begin.
 #' @param addText_modal Logical. Whether to add labels for modal
 #' multivalued variables.
@@ -48,6 +50,15 @@
 #' Drift=0.5,
 #' addText_modal=TRUE,
 #' addText_modal.p=FALSE)
+#' @details For \eqn{q =} \code{quantileNum}, the quantile display pools all lower and
+#' upper endpoints for each variable. It retains empirical quantiles at
+#' \eqn{k/(q+3)}, for \eqn{k=1,\ldots,q+2}, rounds them to two decimal
+#' places, and pairs adjacent quantiles to form \eqn{q+1} bands. Each radar
+#' axis is normalized over this retained quantile range. The bands summarize
+#' the relative spacing of pooled-endpoint quantiles, not distributions
+#' within individual intervals or nested central-coverage intervals. They
+#' are not confidence bands, and the normalized axes do not directly compare
+#' absolute locations or spreads across variables.
 #' @examples
 #' \donttest{
 #' # must specify plotPartial to the rows you want to plot
@@ -236,7 +247,7 @@ ggInterval_radarplot <- function(data = NULL,
     d <- generatePoint(nP, nL, extendUnit)
     d <- d[(nP * nL - nP + 1):(nP * nL), ]
   }
-  p <- p + geom_point(data = d, aes(x = d$x, y = d$y))
+  p <- p + geom_point(data = d, aes(x = .data$x, y = .data$y))
   #get all variables min max data
   if (nP != 0) {
     allData <- iData[, 1:nP]
@@ -579,11 +590,13 @@ ggInterval_radarplot <- function(data = NULL,
                              plotMin.rev)
             myPolyData <- rbind(myPolyData, newTemp)
           }
+          # Bind each guide to this observation's data, rather than the final
+          # loop value. These legacy guides remain invisible (lty = 0).
           p <- p + geom_path(data = myPathData,
-                             aes(x = myPathData$x1, y = myPathData$y1),
+                             aes(x = .data$x1, y = .data$y1),
                              lty = 0) +
             geom_path(data = myPathData,
-                      aes(x = myPathData$x2, y = myPathData$y2),
+                      aes(x = .data$x2, y = .data$y2),
                       lty = 0)
         }
       }
@@ -608,17 +621,17 @@ ggInterval_radarplot <- function(data = NULL,
         p <- p + geom_polygon(
           data = polyDf,
           aes(
-            x = polyDf$cos,
-            y = polyDf$sin,
-            group = polyDf$group,
-            fill = polyDf$obsGroup,
-            col = polyDf$obsGroup
+            x = .data$cos,
+            y = .data$sin,
+            group = .data$group,
+            fill = .data$obsGroup,
+            col = .data$obsGroup
           ),
           alpha = alpha
         )
         if (nP != 0) {
-          p <- p +  geom_point(data = plotMin, aes(x = plotMin$cos, y = plotMin$sin)) +
-            geom_point(data = plotMax, aes(x = plotMax$cos, y = plotMax$sin))
+          p <- p +  geom_point(data = plotMin, aes(x = .data$cos, y = .data$sin)) +
+            geom_point(data = plotMax, aes(x = .data$cos, y = .data$sin))
         }
         
       } else{
@@ -626,10 +639,10 @@ ggInterval_radarplot <- function(data = NULL,
           p <- p + geom_polygon(
             data = myPolyData,
             aes(
-              x = myPolyData$cos,
-              y = myPolyData$sin,
-              fill = myPolyData$group,
-              col = myPolyData$group
+              x = .data$cos,
+              y = .data$sin,
+              fill = .data$group,
+              col = .data$group
             ),
             alpha = alpha
           )
@@ -637,10 +650,10 @@ ggInterval_radarplot <- function(data = NULL,
           p <- p + geom_polygon(
             data = myPolyData,
             aes(
-              x = myPolyData$cos,
-              y = myPolyData$sin,
-              fill = myPolyData$group,
-              col = myPolyData$group
+              x = .data$cos,
+              y = .data$sin,
+              fill = .data$group,
+              col = .data$group
             ),
             alpha = alpha,
             lty = 0
@@ -648,8 +661,8 @@ ggInterval_radarplot <- function(data = NULL,
         }
         
         if (type != "quantile") {
-          p <- p + geom_point(data = plotMin, aes(x = plotMin$cos, y = plotMin$sin)) +
-            geom_point(data = plotMax, aes(x = plotMax$cos, y = plotMax$sin))
+          p <- p + geom_point(data = plotMin, aes(x = .data$cos, y = .data$sin)) +
+            geom_point(data = plotMax, aes(x = .data$cos, y = .data$sin))
         }
         
       }
@@ -738,9 +751,9 @@ ggInterval_radarplot <- function(data = NULL,
         p <- p + geom_text(
           data = newPropDf,
           aes(
-            x = newPropDf$x + textShift,
-            y = newPropDf$y + textShift,
-            label = newPropDf$varLevels
+            x = .data$x + textShift,
+            y = .data$y + textShift,
+            label = .data$varLevels
           ),
           vjust = 2.15,
           hjust = 0.5,
@@ -770,9 +783,9 @@ ggInterval_radarplot <- function(data = NULL,
         p <- p + geom_text(
           data = propTextDf,
           aes(
-            x = propTextDf$x + textShift,
-            y = propTextDf$y,
-            label = round(propTextDf$prop, 2)
+            x = .data$x + textShift,
+            y = .data$y,
+            label = round(.data$prop, 2)
           ),
           size = textSize,
           col = textCol
@@ -795,8 +808,8 @@ ggInterval_radarplot <- function(data = NULL,
       aes(
         x = 0,
         y = 0,
-        xend = d$x,
-        yend = d$y
+        xend = .data$x,
+        yend = .data$y
       ),
       lty = base_lty,
       alpha = 0.6,
@@ -806,11 +819,11 @@ ggInterval_radarplot <- function(data = NULL,
       p <- p + geom_point(data = plotMax, aes(
         x = 0,
         y = 0,
-        alpha = plotMax$Variables
+        alpha = .data$Variables
       )) +
         geom_text(data = newD, aes(
-          x = newD$x,
-          y = newD$y,
+          x = .data$x,
+          y = .data$y,
           label = c(colnames(rawiData))
         ))
       
@@ -822,9 +835,9 @@ ggInterval_radarplot <- function(data = NULL,
       p <- p + geom_text(
         data = textMin,
         aes(
-          x = textMin$cos,
-          y = textMin$sin,
-          label = textMin$min
+          x = .data$cos,
+          y = .data$sin,
+          label = .data$min
         ),
         size = textSize,
         col = textCol
@@ -832,9 +845,9 @@ ggInterval_radarplot <- function(data = NULL,
         geom_text(
           data = textMax,
           aes(
-            x = textMax$cos,
-            y = textMax$sin,
-            label = textMax$max
+            x = .data$cos,
+            y = .data$sin,
+            label = .data$max
           ),
           size = textSize,
           col = textCol
@@ -881,7 +894,8 @@ ggInterval_radarplot <- function(data = NULL,
     }
     p <- p + labs(title = myTitle) +
       scale_colour_discrete(name = "Group") +
-      scale_alpha_discrete(name = "Interval value of each observation") +
+      (if (nP != 0) radar_alpha_scale(plotMax$Variables,
+                                    "Interval value of each observation")) +
       scale_fill_discrete(name = "Group") +
       theme_bw()
     
@@ -901,9 +915,9 @@ ggInterval_radarplot <- function(data = NULL,
         )), "%")
       )
       p <- p + geom_text(data = tmp, aes(
-        x = tmp$x,
-        y = tmp$y,
-        label = tmp$label
+        x = .data$x,
+        y = .data$y,
+        label = .data$label
       ))
     }
   } else{
@@ -978,7 +992,7 @@ ggInterval_radarplot <- function(data = NULL,
       
       base <- base + labs(title = paste0("Radar : ", rownames(iData)[u])) +
         labs(title = paste0("Radar : ", rownames(iData)[u])) + scale_colour_discrete(name = "Group") +
-        scale_alpha_discrete(name = "Interval")
+        radar_alpha_scale(plotMax.temp$Variables, "Interval")
       plotList[[u]] <- base
       u <- u + 1
     }
@@ -1003,6 +1017,18 @@ ggInterval_radarplot <- function(data = NULL,
 
 
 
+
+# Preserve the legacy opacity keys for the interval labels. These keys are
+# categorical identifiers, not a quantitative alpha encoding of interval width.
+radar_alpha_scale <- function(labels, name) {
+  keys <- if (is.factor(labels)) {
+    levels(droplevels(labels))
+  } else {
+    sort(unique(as.character(labels)), na.last = NA)
+  }
+  values <- stats::setNames(seq(0.1, 1, length.out = length(keys)), keys)
+  scale_alpha_manual(name = name, values = values)
+}
 
 plotFun <- function(p,
                     iData,
@@ -1081,9 +1107,9 @@ plotFun <- function(p,
                        plotMin.rev)
       myPolyData <- rbind(myPolyData, newTemp)
     }
-    base <- p + geom_path(data = myPathData, aes(x = myPathData$x1, y =
-                                                   myPathData$y1)) +
-      geom_path(data = myPathData, aes(x = myPathData$x2, y = myPathData$y2))
+    base <- p + geom_path(data = myPathData, aes(x = .data$x1, y =
+                                                   .data$y1)) +
+      geom_path(data = myPathData, aes(x = .data$x2, y = .data$y2))
     
     
     
@@ -1099,8 +1125,8 @@ plotFun <- function(p,
       polyDf <- as.data.frame(rbind(tempPolyDf, tempRectDf))
       
       base <- base +
-        geom_point(data = plotMin.temp, aes(x = plotMin.temp$cos, y = plotMin.temp$sin)) +
-        geom_point(data = plotMax.temp, aes(x = plotMax.temp$cos, y = plotMax.temp$sin))
+        geom_point(data = plotMin.temp, aes(x = .data$cos, y = .data$sin)) +
+        geom_point(data = plotMax.temp, aes(x = .data$cos, y = .data$sin))
       
       
       
@@ -1108,11 +1134,11 @@ plotFun <- function(p,
       base <- base + geom_polygon(
         data = polyDf,
         aes(
-          x = polyDf$cos,
-          y = polyDf$sin,
-          group = polyDf$group,
-          fill = polyDf$obsGroup,
-          col = polyDf$obsGroup
+          x = .data$cos,
+          y = .data$sin,
+          group = .data$group,
+          fill = .data$obsGroup,
+          col = .data$obsGroup
         ),
         alpha = alpha
       )
@@ -1123,15 +1149,15 @@ plotFun <- function(p,
       base <- base + geom_polygon(
         data = myPolyData,
         aes(
-          x = myPolyData$cos,
-          y = myPolyData$sin,
-          fill = myPolyData$group,
-          col = myPolyData$group
+          x = .data$cos,
+          y = .data$sin,
+          fill = .data$group,
+          col = .data$group
         ),
         alpha = alpha
       ) +
-        geom_point(data = plotMin.temp, aes(x = plotMin.temp$cos, y = plotMin.temp$sin)) +
-        geom_point(data = plotMax.temp, aes(x = plotMax.temp$cos, y = plotMax.temp$sin))
+        geom_point(data = plotMin.temp, aes(x = .data$cos, y = .data$sin)) +
+        geom_point(data = plotMax.temp, aes(x = .data$cos, y = .data$sin))
     }
     
     # base<-base+geom_polygon(data=myPolyData,aes(x=myPolyData$cos,y=myPolyData$sin,fill=group),alpha = alpha,col="black")
@@ -1209,9 +1235,9 @@ plotFun <- function(p,
       base <- base + geom_text(
         data = newPropDf,
         aes(
-          x = newPropDf$x + textShift,
-          y = newPropDf$y + textShift,
-          label = newPropDf$varLevels
+          x = .data$x + textShift,
+          y = .data$y + textShift,
+          label = .data$varLevels
         ),
         vjust = 2.75
       )
@@ -1235,9 +1261,9 @@ plotFun <- function(p,
       #print(propTextDf)
       base <- base + geom_text(data = propTextDf,
                                aes(
-                                 x = propTextDf$x + textShift,
-                                 y = propTextDf$y,
-                                 label = round(propTextDf$prop, 2)
+                                 x = .data$x + textShift,
+                                 y = .data$y,
+                                 label = round(.data$prop, 2)
                                ))
     }
   }
@@ -1248,8 +1274,8 @@ plotFun <- function(p,
     aes(
       x = 0,
       y = 0,
-      xend = d$x,
-      yend = d$y
+      xend = .data$x,
+      yend = .data$y
     ),
     lty = base_lty,
     alpha = 0.6,
@@ -1258,26 +1284,26 @@ plotFun <- function(p,
     geom_point(data = plotMax.temp, aes(
       x = 0,
       y = 0,
-      alpha = plotMax.temp$Variables
+      alpha = .data$Variables
     )) +
     geom_text(data = newD, aes(
-      x = newD$x,
-      y = newD$y,
+      x = .data$x,
+      y = .data$y,
       label = c(colnames(rawiData))
     ))
   
   if (addText) {
     base <- base + geom_text(data = textMin.temp,
                              aes(
-                               x = textMin.temp$cos,
-                               y = textMin.temp$sin,
-                               label = textMin.temp$min
+                               x = .data$cos,
+                               y = .data$sin,
+                               label = .data$min
                              )) +
       geom_text(data = textMax.temp,
                 aes(
-                  x = textMax.temp$cos,
-                  y = textMax.temp$sin,
-                  label = textMax.temp$max
+                  x = .data$cos,
+                  y = .data$sin,
+                  label = .data$max
                 ))
   }
   
@@ -1314,9 +1340,9 @@ plotFun <- function(p,
       )), "%")
     )
     base <- base + geom_text(data = tmp, aes(
-      x = tmp$x,
-      y = tmp$y,
-      label = tmp$label
+      x = .data$x,
+      y = .data$y,
+      label = .data$label
     ))
   }
   base <- base + theme_bw() + guides(alpha = "none")
@@ -1363,9 +1389,9 @@ generateCircle <- function(nLayer = NULL,
   p <- ggplot() +
     ggforce::geom_circle(
       aes(
-        x0 = circles$x0,
-        y0 = circles$y0,
-        r = circles$r
+        x0 = .data$x0,
+        y0 = .data$y0,
+        r = .data$r
       ),
       data = circles,
       col = "gray50"

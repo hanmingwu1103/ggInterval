@@ -3,6 +3,9 @@
 #' @title Face Data Example
 #' @description
 #' Symbolic data matrix with all the variables of interval type.
+#' The 27 rows are nine subjects (FRA, HUS, INC, ISA, JPL, KHA, LOT, PHI,
+#' ROM) with three image sequences per subject; AD, BC, AH, DH, EH and GH are six
+#' positive-width interval variables.
 #' @usage data('facedata')
 #' @format
 #' $I;AD;AD;$I;BC;BC;......... \cr
@@ -32,6 +35,11 @@
 #' ROM2;$I;168.15;172.14;$I;63.13;68.07;.........\cr
 #' ROM3;$I;167.11;171.19;$I;63.13;68.03;.........\cr
 #' @references
+#' Arce Garro, Jorge and Rodr\enc{í}{i}guez Rojas, Oldemar (2019). Optimized
+#' dimensionality reduction methods for interval-valued variables and their
+#' application to facial recognition. \emph{Entropy}, 21(10), 1016, pp. 9--10.
+#' \doi{10.3390/e21101016}
+#'
 #' Billard, Lynne and Diday, Edwin (2006).
 #' \emph{Symbolic Data Analysis: Conceptual Statistics and Data Mining}.
 #' Chichester, UK: John Wiley and Sons.
@@ -126,7 +134,21 @@
 
 #' @name Environment
 #' @title Environment data example
-#' @description Environment interval and modal data example.
+#' @description Environmental-questionnaire data with 14 symbolic objects and
+#' 17 variables: 13 interval variables (CONTROL through VEHICLE) and four modal
+#' variables (URBANICITY, INCOMELEVEL, EDUCATION, REGIONDEVELOPME).
+#' @details Stored values match the SODAS example distributed with Umbleja,
+#' Ichino and Yaguchi (2020). Source object identifiers 1241, 1242, 1441, 1442,
+#' 1641, 1642, 1741, 2241, 2242, 2441, 2442, 2641, 2642, 2741 correspond in
+#' order to rows 1--14. Modal categories are numeric codes without a codebook.
+#' Since version 0.2.6 the INCOMELEVEL category labels follow the order of the
+#' SODAS source files, 25, 75, 50, 90, 100. Earlier versions listed the labels
+#' as 25, 50, 75, 90, 100 while storing the proportions in the source order, so
+#' the labels 50 and 75 were interchanged; the proportions are unchanged.
+#' @references Umbleja, K., Ichino, M. and Yaguchi, H. (2020). Improving
+#' symbolic data visualization for pattern recognition and knowledge
+#' discovery. \emph{Visual Informatics}, 4(1), 23--31.
+#' \doi{10.1016/j.visinf.2019.12.003}.
 #' @usage data(Environment)
 #' @examples
 #' data(Environment)
@@ -174,3 +196,42 @@
 #' @source Adapted from \code{RSDA::Cardiological2}; see
 #'   \url{https://CRAN.R-project.org/package=RSDA}.
 "Cardiological2"
+
+#' @name stock.data.LH
+#' @title Synthetic financial low-high intervals
+#' @description A 62-observation subset of the randomly generated
+#' \code{TTR::ttrc} series, with dates in January--March 1985. The data do not
+#' represent an actual security. Each row retains a low-high interval and
+#' the auxiliary columns used in the interval-valued line-plot example.
+#' @format A \code{symbolic_tbl} with 62 rows and seven columns:
+#' \describe{
+#'   \item{V1}{A \code{symbolic_interval} column with lower endpoint \code{Low}
+#'     and upper endpoint \code{High}.}
+#'   \item{Date}{Date labels, from 1985-01-02 to 1985-03-29.}
+#'   \item{Close}{Synthetic closing prices.}
+#'   \item{Low}{Synthetic daily low prices, retained for reconstruction.}
+#'   \item{High}{Synthetic daily high prices, retained for reconstruction.}
+#'   \item{Month}{A factor with levels \code{Jan}, \code{Feb}, and \code{Mar}.}
+#'   \item{Day}{Integer day of month, used as the horizontal coordinate.}
+#' }
+#' @details There are 22, 19, and 21 observations in January, February,
+#' and March, respectively. The interval centers are the averages of
+#' \code{Low} and \code{High}; they need not equal \code{Close}.
+#' The interval column is constructed with \code{classic2sym()}; the source
+#' columns are then attached with \code{dplyr::bind_cols()}. The result is
+#' a static symbolic table, so \code{head(stock.data.LH)} displays the
+#' intervals and their accompanying columns together.
+#' TTR is needed to reconstruct the data, but not to load this stored subset.
+#' @source Adapted from \code{TTR::ttrc} in TTR version 0.24.4. TTR documents
+#' the source as randomly generated data for offline examples, not prices
+#' of an actual security. See \url{https://CRAN.R-project.org/package=TTR}.
+#' @usage data("stock.data.LH")
+#' @examples
+#' data("stock.data.LH")
+#' head(stock.data.LH)
+#' ggInterval_lineplot(stock.data.LH, aes(y = V1, x = Day), barWidth = 0.6) +
+#'   geom_point(aes(y = Close), colour = "#D95F02") +
+#'   facet_wrap(~Month, ncol = 1, scales = "free_y")
+#' @seealso \code{ggInterval_lineplot}, \code{classic2sym}
+#' @keywords datasets
+"stock.data.LH"

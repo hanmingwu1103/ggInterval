@@ -4,10 +4,37 @@ is_ggplot_object <- function(x) {
   inherits(x, "ggplot") || inherits(x, "ggplot2::ggplot")
 }
 
-test_that("classic2sym returns a ggInterval object", {
-  iris_sym <- classic2sym(iris, groupby = "Species")
-  expect_s3_class(iris_sym, "ggInterval")
-  expect_true("intervalData" %in% names(iris_sym))
+test_that("classic2sym named groups preserve endpoints and summaries without warnings", {
+  groups <- split(iris[1:4], iris$Species)
+  lower <- do.call(rbind, lapply(groups, function(d) vapply(d, min, numeric(1))))
+  upper <- do.call(rbind, lapply(groups, function(d) vapply(d, max, numeric(1))))
+  rownames(lower) <- rownames(upper) <- NULL
+
+  for (group_name in c("Species", "Group name")) {
+    input <- iris
+    names(input)[5] <- group_name
+    iris_sym <- expect_no_warning(do.call(classic2sym,
+                                         list(data = input, groupby = group_name)))
+    expect_s3_class(iris_sym, "ggInterval")
+    expect_true("intervalData" %in% names(iris_sym))
+    expect_identical(rownames(iris_sym$intervalData), levels(iris$Species))
+    expect_identical(names(iris_sym$intervalData), names(iris)[1:4])
+    for (j in seq_len(4)) {
+      expect_equal(iris_sym$intervalData[[j]]$min, lower[, j], ignore_attr = TRUE)
+      expect_equal(iris_sym$intervalData[[j]]$max, upper[, j], ignore_attr = TRUE)
+    }
+    expect_equal(as.matrix(iris_sym$statisticsDF$min), lower, ignore_attr = TRUE)
+    expect_equal(as.matrix(iris_sym$statisticsDF$median), (lower + upper) / 2,
+                 ignore_attr = TRUE)
+    expect_equal(as.matrix(iris_sym$statisticsDF$max), upper, ignore_attr = TRUE)
+    expect_identical(iris_sym$rawData, input)
+    expect_null(iris_sym$clusterResult)
+  }
+})
+
+test_that("classic2sym rejects a missing named grouping column", {
+  expect_no_warning(expect_error(classic2sym(iris, groupby = "not_a_group"),
+                                  "not_a_group"))
 })
 
 test_that("scatterplot label controls return a ggplot object", {
@@ -42,7 +69,8 @@ test_that("scatterplot matrix returns a ggplot object and honors borderLinewidth
 })
 
 test_that("histogram variants return plots", {
-  h_equal <- ggInterval_hist(facedata, aes(x = AD), method = "equal-bin", bins = 8)
+  h_equal <- expect_no_warning(ggInterval_hist(facedata, aes(x = AD),
+                                             method = "equal-bin", bins = 8))
   h_unequal <- ggInterval_hist(facedata, aes(x = AD), method = "unequal-bin")
 
   expect_s3_class(h_equal, "ggInterval_hist_result")

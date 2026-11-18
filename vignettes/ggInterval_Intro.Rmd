@@ -43,7 +43,17 @@ layered grammar familiar to `ggplot2` users.
 This vignette focuses on source-portable examples that can be rebuilt directly
 from the package. It uses built-in data, the bundled `data.csv` file for the
 aggregation example, and optional sections for packages such as `HistDAWass`
-and `MAINT.Data`.
+and `MAINT.Data`. The examples below use version 0.2.6; the four diagnostic
+functions and `stock.data.LH` are not available in 0.2.5.
+
+An interval-valued observation records an ordered pair of endpoints
+$[a_{ij}, b_{ij}]$ for unit $i$ and variable $j$. Its center is
+$c_{ij}=(a_{ij}+b_{ij})/2$, its full range is $r_{ij}=b_{ij}-a_{ij}$,
+and its half-width is $h_{ij}=r_{ij}/2$. A center alone loses the range.
+The endpoints do not, by themselves, specify a distribution of values inside
+the interval. Assumptions used by particular summaries are stated below.
+The displays support descriptive exploration; they do not establish
+recognition accuracy, statistical significance, or estimator superiority.
 
 # Built-in Data
 
@@ -58,6 +68,26 @@ Subjects <- substr(rownames(facedata), 1, 3)
 Subjects
 ```
 
+The face data contain 27 cases: nine subjects with three image sequences per
+subject and six interval-valued facial measurements in pixels. The stored
+values agree, up to printed rounding, with the table reported by Arce Garro
+and Rodriguez Rojas (2019). Each interval summarizes one image sequence;
+the rule that produced its endpoints is not stated in the inspected sources.
+Subject labels therefore identify the recorded cases, without implying a
+validated face-recognition procedure.
+
+`Environment` contains 14 symbolic objects, with 13 interval variables and
+four modal variables (`URBANICITY`, `INCOMELEVEL`, `EDUCATION`, and
+`REGIONDEVELOPME`). The modal fields contain category codes and proportions.
+The stored values were compared with the SODAS example distributed with
+Umbleja, Ichino and Yaguchi (2020). The original item-to-variable mapping,
+endpoint preprocessing, complete codebook, and mapping of the urbanicity
+codes remain unresolved. Since 0.2.6 the `INCOMELEVEL` labels follow the
+source order 25, 75, 50, 90, 100; earlier versions listed them as
+25, 50, 75, 90, 100 with the proportions in the same positions. The
+displays below describe stored profiles and do not attach
+substantive meanings to the unresolved codes.
+
 # Basic Usage
 
 ```{r ggplot2_workflow}
@@ -71,10 +101,45 @@ ggInterval_scatterplot(
   labs(fill = "Subjects")
 ```
 
+## Returned Objects and Further Layers
+
+Most plotting functions return ordinary `ggplot` objects. The following
+exceptions matter when saving a result or adding layers:
+
+| Function | Returned object | Plot component |
+|:--|:--|:--|
+| `ggInterval_hist()` | `ggInterval_hist_result`, with frequency tables | `$plot` |
+| `ggInterval_2Dhist()` | List, with a cell table | `$plot` |
+| `ggInterval_PCA()` | Augmented `princomp` object, with `$scores_interval` | `$ggplotPCA` |
+| `ggInterval_radarplot(inOneFig = FALSE)` | Arranged grob list | Not an ordinary `ggplot` object |
+
+The histogram result has a print method that draws its plot. Printing a
+2D-histogram list displays its nested plot and table; printing a PCA result
+shows the PCA summary. `ggInterval_PCA(plot = TRUE)` also draws its plot as
+a side effect. To add themes or other layers to these three results, use
+the stored plot component, as illustrated later. `scale()` applied to a
+symbolic table returns an object whose `$intervalData` component contains
+the standardized interval table.
+
+The four diagnostic functions introduced below return ordinary `ggplot`
+objects, with computed quantities available through
+`attr(plot, "interval_diagnostics")`. They accept symbolic interval tables,
+objects containing `intervalData`, or paired numeric endpoint matrices
+supplied as `list(lower = ..., upper = ...)`. The `variables` argument
+selects interval variables by name.
+
 # Aggregating Classical Data into Interval-Valued Data
 
+The CSV is installed with the package and located with `system.file()`, so
+its use does not depend on the working directory. Its empty final column is
+read as `X` and removed before excluding the identifier. The K-means output
+below illustrates one unseeded run; independently repeated cluster memberships
+and summaries can vary, and cluster labels and row order are not fixed.
+Diagnosis-based aggregation uses the observed groups and is deterministic.
+
 ```{r aggregation_examples}
-breastData <- read.csv("data.csv")
+breastData <- read.csv(system.file("extdata", "data.csv",
+                                  package = "ggInterval", mustWork = TRUE))
 breastData$X <- NULL
 breastData <- dplyr::select(breastData, -id)
 
@@ -86,6 +151,34 @@ head(breastData_diag$intervalData[, 1:4])
 ```
 
 # Descriptive Statistics
+
+The center-based mean is supplied by the symbolic methods in `RSDA`.
+`sd(facedata)` uses the Billard mixture standard deviation by default; it
+includes a uniform-within-interval variance term $h_{ij}^2/3$ and is not the
+sample standard deviation of the centers. The explicit `method = "BD"`
+below selects the Billard--Diday covariance and its matching correlation
+normalization. `B` denotes Billard, and `centers` gives ordinary sample
+statistics of the interval centers. Correlations require positive
+denominator variances.
+
+`BG` is retained as the software label for Bertrand--Goupil covariance and
+correlation. The covariance formula is documented in Irpino and Verde (2015),
+Equation (24), where it is attributed to Bertrand and Goupil. The original
+Bertrand--Goupil chapter gives univariate means and variances but does not
+define a covariance or correlation. The implemented BG covariance is
+
+$$
+C_{BG}(X,Y)=\frac{1}{n}\sum_{i=1}^n
+(c_{Xi}-\bar c_X)(c_{Yi}-\bar c_Y).
+$$
+
+The `centers` covariance instead uses divisor $n-1$. The package divides
+BG covariance by $\sqrt{C_{BG}(X,X)C_{BG}(Y,Y)}$, giving Pearson correlation
+of the centers when their variances are positive. This differs from
+Equation (30) of Irpino and Verde, which uses mixture standard deviations
+in the denominator. The BG option does not implement the Wasserstein-based
+statistics proposed in that article. See `?cov` and `?cor` for formulas and
+references.
 
 ```{r descriptive_statistics}
 mean(facedata)
@@ -144,6 +237,37 @@ labels repeated inside each variable panel.
 
 ## Boxplots and Histograms
 
+The endpoint-quantile boxplots use the empirical 0%, 25%, 50%, 75%, and
+100% quantiles of the lower endpoints and, separately, of the upper endpoints
+across observations. The side-by-side view shows the two endpoint
+summaries directly. These summaries do not identify the shape of a
+within-interval distribution.
+The widths of the quantile-box segments are heuristic display weights based
+on uniform interval-mass concentration, not an estimated within-interval density.
+
+For the equal-bin histogram, breaks divide the pooled endpoint span into
+`bins` equal parts. An interval of positive width contributes its overlap
+length with a bin divided by its own width. This allocation corresponds to
+uniform mass within each interval: weighted frequencies sum to the number
+of observations, and relative frequencies sum to one. A zero-width interval
+contributes one to exactly one bin. Bins are left-closed and right-open,
+except that the final bin includes the maximum endpoint. A constant variable
+uses a support padded on each side by `max(abs(value) * 0.05, 0.5)`.
+
+The one-dimensional `method = "unequal-bin"` display has different semantics.
+It counts how many intervals cover each location on a 0.01 grid, joining
+consecutive equal counts into rectangles. Its table calls this quantity
+`Cumulative.Concepts`; it is a coverage count, not a probability mass or
+density. A constant variable is represented by its coverage count at the
+exact value as a zero-width rectangle, without grid construction or support
+padding. Isolated point intervals can affect a coverage count only at
+sampled locations they cover. The `bins` argument is ignored in this mode.
+
+In 0.2.6 the first coverage run is encoded correctly when several intervals
+share the minimum. For AD, this changes the first table row from
+`[149.35:150.32] 1` in 0.2.5 to `[149.34:150.32] 2`; the positive-width
+equal-bin and 2D overlap allocations are unchanged.
+
 ```{r boxplots_histograms}
 ggInterval_boxplot(facedata, plotAll = TRUE, width_type = "violin-like") +
   theme(legend.position = "bottom", axis.text.x = element_blank())
@@ -171,29 +295,29 @@ ggInterval_hist(facedata, aes(x = AD), method = "unequal-bin")
 
 ## Line Plot
 
+This example demonstrates the interval-valued line plot using the built-in
+`stock.data.LH` table. It contains 62 observations from January--March 1985
+in the randomly generated `TTR::ttrc` series, not prices of an actual security.
+It can be loaded without TTR installed.
+
+```{r stock_data_preview}
+data("stock.data.LH", package = "ggInterval")
+head(stock.data.LH)
+```
+
+`V1` is the interval `[Low, High]`. The accompanying columns are `Date`,
+`Close`, `Low`, `High`, `Month`, and `Day`. `Month` has levels Jan, Feb,
+and Mar, and `Day` is the day of month. The interval center is
+`(Low + High) / 2`; it need not equal the closing value `Close`.
+The vertical ranges and connected centers preserve daily low--high
+information, while the added points display the synthetic closing values.
+No distribution of prices inside an interval is assumed by this display.
+The free vertical scales support reading each monthly panel; they do not
+provide a common visual scale for comparing vertical changes between months.
+The connecting lines are descriptive, without interpolation of unobserved
+daily paths, forecasting, or a financial-performance interpretation.
+
 ```{r lineplot_stocklike}
-if (!requireNamespace("TTR", quietly = TRUE)) {
-  stop("Package 'TTR' is required for this example.")
-}
-
-data("ttrc", package = "TTR")
-stock.data <- subset(
-  ttrc[, c("Date", "Close", "Low", "High")],
-  format(Date, "%Y-%m") %in% c("1985-01", "1985-02", "1985-03")
-)
-stock.data$Month <- factor(
-  month.abb[as.integer(format(stock.data$Date, "%m"))],
-  levels = month.abb[1:3]
-)
-stock.data$Day <- as.integer(format(stock.data$Date, "%d"))
-
-stock.data.LH <- classic2sym(
-  stock.data,
-  groupby = "customize",
-  minData = stock.data$Low,
-  maxData = stock.data$High
-)
-
 ggInterval_lineplot(stock.data.LH, aes(y = V1, x = Day), barWidth = 0.6) +
   geom_point(aes(y = Close), shape = 21, fill = "#D95F02",
              color = "black", size = 1.6, stroke = 0.2) +
@@ -204,6 +328,34 @@ ggInterval_lineplot(stock.data.LH, aes(y = V1, x = Day), barWidth = 0.6) +
        x = "Day of month", y = "Price") +
   ggthemes::theme_economist() +
   theme(strip.text = element_text(face = "bold"))
+```
+
+### Optional Reconstruction from TTR
+
+The following code documents how the stored table was constructed. It is
+run only when TTR is installed; the source comparison uses TTR 0.24.4.
+The reconstructed object has a separate name so the example does not replace
+the built-in data.
+
+```{r stock_data_reconstruction, eval = requireNamespace("TTR", quietly = TRUE)}
+data("ttrc", package = "TTR")
+stock.data <- subset(
+  ttrc[, c("Date", "Close", "Low", "High")],
+  format(Date, "%Y-%m") %in% c("1985-01", "1985-02", "1985-03")
+)
+stock.data$Month <- factor(
+  month.abb[as.integer(format(stock.data$Date, "%m"))],
+  levels = month.abb[1:3]
+)
+stock.data$Day <- as.integer(format(stock.data$Date, "%d"))
+stock.intervals <- classic2sym(
+  stock.data,
+  groupby = "customize",
+  minData = stock.data$Low,
+  maxData = stock.data$High
+)$intervalData
+stock.data.rebuilt <- dplyr::bind_cols(stock.intervals, stock.data)
+head(stock.data.rebuilt)
 ```
 
 ## Min-Max Plot
@@ -256,6 +408,22 @@ ggInterval_scatterplot(
 ```
 
 ## 2D Histograms
+
+Both 2D methods allocate each observation's mass as the product of the two
+axis-overlap fractions. For positive-width intervals, this is the product
+of uniform distributions within the observation's rectangle. `display = "f"`
+shows weighted frequencies, `"p"` shows relative frequencies, and `"h"`
+shows relative frequency divided by cell area. The relative frequencies sum
+to one; for density, the sum of density times cell area is one. A point on
+an axis is assigned to exactly one bin using the same boundary convention
+as the equal-bin one-dimensional histogram.
+
+Here `method = "unequal-bin"` uses sorted unique endpoints, with `tau`
+merging chains of adjacent gaps smaller than that tolerance while retaining
+the outer endpoints. It still displays allocated mass or density, unlike
+the one-dimensional unequal-bin coverage-count display. A constant axis is
+padded by the same rule as above. Displayed table endpoints and values are
+rounded, whereas allocation uses unrounded values.
 
 ```{r hist2d_equal}
 face.2dh.equal <- ggInterval_2Dhist(
@@ -375,6 +543,22 @@ ggInterval_indexImage(
 ```
 
 ## Radar Plots
+
+For the mixed `Environment` profiles, each interval axis is normalized by
+that variable's observed endpoint range over all 14 objects. Radial widths
+are therefore relative ranges, not directly comparable raw widths across
+variables. Modal bars occupy the stored category positions; their heights
+increase with the proportions but are not proportional to them. The default
+polygon passes through the largest-proportion category. The missing
+codebook described above prevents label-specific interpretation.
+
+The `type = "quantile"` examples pool lower and upper endpoints for each
+interval variable. With `quantileNum = q`, they retain empirical quantiles
+at $k/(q+3)$ for $k=1,\ldots,q+2$, round to two decimals, and pair adjacent
+quantiles into $q+1$ bands. Each axis is normalized over its retained quantile
+range. These are adjacent pooled-endpoint bands, not nested central-coverage
+intervals, confidence bands, or distributions inside the individual intervals.
+They do not directly compare absolute spread or establish skewness.
 
 ```{r radar_plots}
 library(ggthemes)
@@ -511,8 +695,19 @@ ggInterval_PCA(myAbalone$intervalData, plot = FALSE)$ggplotPCA
 
 # PCA and Correlation Heatmaps
 
+These examples use vertex-based interval PCA. In `ggInterval_PCA()`, vertex
+coordinates are standardized column-wise before `princomp`; retained
+vertices receive equal weight. This treats the vertices as the input to the
+projection, without specifying a distribution inside each box. Projected
+intervals and polygons describe geometric spread and overlap, not confidence
+regions, recognition accuracy, or significance. The returned object is an
+augmented `princomp` result; add graphical layers to `$ggplotPCA`.
+
 ```{r pca_example}
 pca.results <- RSDA::sym.pca(facedata, method = "tops")
+pca.results$Sym.Components <- structure(
+  as.data.frame(pca.results$Sym.Components),
+  class = c("symbolic_tbl", "data.frame"))
 rownames(pca.results$Sym.Components) <- rownames(facedata)
 
 ggInterval_scatterplot(
@@ -531,19 +726,193 @@ ggInterval_scatterplot(
   coord_fixed(ratio = 1) +
   labs(x = "PCA-1", y = "PCA-2", fill = "Subjects")
 
-ggInterval_PCA(facedata, poly = TRUE, concepts_group = as.factor(Subjects)) +
+face.pca <- ggInterval_PCA(
+  facedata, poly = TRUE, concepts_group = as.factor(Subjects), plot = FALSE
+)
+face.pca$ggplotPCA +
   coord_fixed(ratio = 1) +
   labs(x = "PCA-1", y = "PCA-2")
 ```
+
+The heatmap below uses the package's BG normalization described above.
+It is a heatmap of interval-center Pearson correlations, not the
+center--range association map introduced in the next section.
 
 ```{r corrplot_example}
 ggInterval_corrplot(facedata, method = "BG", triangle = "lower")
 ```
 
+# Graphical exploration of simulated interval-valued data
+
+The following data reproduce the generating mechanism and seed used in the
+paper's simulation. They contain three groups of 15 bivariate observations.
+Within each group, the two center coordinates have unit generating variances
+and generating correlation 0.7, with means `(0, 0)`, `(6, 5)`, and `(-5, 6)`.
+Independent half-widths are initially uniform on `[0.2, 0.9]`, `[0.2, 1.4]`,
+and `[0.2, 1.9]` for the three groups. Three selected observations have both
+half-widths increased by 4; their centers are unchanged. The generated data,
+not a newly tuned scenario, are shared by all four diagnostic examples.
+
+```{r simulation_data}
+set.seed(20260709)
+
+sim_interval <- function(n_per = 15, rho = 0.7,
+                         mu = list(c(0, 0), c(6, 5), c(-5, 6)),
+                         hw_lo = c(0.2, 0.2, 0.2),
+                         hw_hi = c(0.9, 1.4, 1.9),
+                         outlier_frac = 0.06) {
+  G <- length(mu)
+  Sigma <- matrix(c(1, rho, rho, 1), 2, 2)
+  rows <- list()
+  for (g in seq_len(G)) {
+    C <- MASS::mvrnorm(n_per, mu = mu[[g]], Sigma = Sigma)
+    h1 <- runif(n_per, hw_lo[g], hw_hi[g])
+    h2 <- runif(n_per, hw_lo[g], hw_hi[g])
+    df <- data.frame(
+      group = factor(g),
+      X1min = C[, 1] - h1, X1max = C[, 1] + h1,
+      X2min = C[, 2] - h2, X2max = C[, 2] + h2)
+    rows[[g]] <- df
+  }
+  dat <- do.call(rbind, rows)
+  # Move both endpoints outward by 4; preserve the centers.
+  n_out <- max(1, round(outlier_frac * nrow(dat)))
+  idx <- sample(seq_len(nrow(dat)), n_out)
+  dat$X1min[idx] <- dat$X1min[idx] - 4; dat$X1max[idx] <- dat$X1max[idx] + 4
+  dat$X2min[idx] <- dat$X2min[idx] - 4; dat$X2max[idx] <- dat$X2max[idx] + 4
+  dat$outlier <- FALSE; dat$outlier[idx] <- TRUE
+  dat
+}
+
+sim <- sim_interval()
+sim.sym <- classic2sym(sim, groupby = "customize",
+                       minData = sim[, c("X1min", "X2min")],
+                       maxData = sim[, c("X1max", "X2max")])$intervalData
+colnames(sim.sym) <- c("X1", "X2")
+
+which(sim$outlier)
+centers <- data.frame(group = sim$group,
+                     X1 = (sim$X1min + sim$X1max) / 2,
+                     X2 = (sim$X2min + sim$X2max) / 2)
+round(c(pooled = stats::cor(centers$X1, centers$X2),
+        sapply(split(centers, centers$group),
+               function(d) stats::cor(d$X1, d$X2))), 3)
+```
+
+The injected rows are 6, 10, and 39. The within-group sample correlations
+are approximately 0.86, 0.89, and 0.65; the pooled sample correlation is
+approximately -0.08. The latter also reflects differences among group means.
+Neither the generating correlation nor these sample correlations is an
+intraclass correlation or a measure of agreement between study centers.
+Here an interval center simply means its midpoint.
+
+## Endpoint ECDF Envelope
+
+```{r diagnostic_ecdf}
+p.ecdf <- ggInterval_ecdf(sim.sym, variables = "X1")
+p.ecdf
+head(attr(p.ecdf, "interval_diagnostics")$knots)
+```
+
+The lower curve is the empirical CDF of the upper endpoints and the upper
+curve is the empirical CDF of the lower endpoints. Every empirical CDF
+formed by selecting one value per interval lies between them, with equal
+observation weights. Steps and shaded rectangles use exact endpoint knots;
+the dashed line is the midpoint ECDF. This is an endpoint envelope, not a
+confidence band or an estimated within-interval distribution.
+
+## Center--Range Association Map
+
+```{r diagnostic_association}
+p.association <- ggInterval_CRcor(sim.sym, group = sim$group)
+p.association
+association <- attr(p.association, "interval_diagnostics")
+round(association$pooled, 3)
+round(association$group_demeaned, 3)
+```
+
+For each variable this display derives a center column `C` and a full-range
+column `R`. The lower-left triangle contains ordinary Pearson correlations
+pooled over observations. With `group` supplied, the upper-right triangle
+uses residuals after removing each group's mean from each derived column.
+The diagonal contains pooled self-correlations. This juxtaposition helps
+separate pooled associations from associations after group-mean removal;
+the assembled display is not a single correlation matrix.
+
+Group-demeaned correlations are not averages of group-specific correlations,
+ICCs, inter-center agreement measures, or the B, BD, or BG interval
+correlations. A constant derived column has undefined correlation, shown as
+`NA`. Group labels are supplied information, not estimated clusters.
+
+## Center--Range Deviation Contributions
+
+```{r diagnostic_deviation}
+p.deviation <- ggInterval_deviation(
+  sim.sym, group = sim$group, highlight = sim$outlier
+)
+p.deviation
+head(attr(p.deviation, "interval_diagnostics")$contributions)
+```
+
+The default reference comprises componentwise medians of the centers and
+full ranges within each supplied group; the default scale for each variable
+is its global endpoint span. With center difference $\Delta c_j$, full-range
+difference $\Delta r_j$, and positive scale $s_j$, the two contributions are
+$\sum_j(\Delta c_j/s_j)^2$ and
+$\sum_j(\Delta r_j/(2s_j))^2$. Their sum equals the mean squared standardized
+deviation of the two endpoints, summed over variables.
+
+Bars are ordered by total deviation and retain every observation. Outlined
+bars identify the supplied injection labels; the function does not detect
+outliers. This is a geometric decomposition, not a Shapley attribution or
+a calibrated test. Values depend on the chosen reference and scales, so a
+large bar should be interpreted with its center and range contributions.
+
+## Pairwise Box Overlap
+
+```{r diagnostic_overlap}
+p.overlap <- ggInterval_overlap(sim.sym, group = sim$group)
+p.overlap
+attr(p.overlap, "interval_diagnostics")$overlap[1:5, 1:5]
+```
+
+Each observation is the Cartesian product of its selected intervals. A cell
+shows intersection volume divided by union volume: zero for disjoint boxes
+or mere boundary contact and one for identical positive-volume boxes.
+Grouping changes the display order, not the overlaps. This compares
+observations geometrically; it is not a variable-correlation heatmap or a
+measure of agreement between unobserved within-box distributions.
+
+Any box with zero width on a selected axis has zero volume. The default
+`zero_width = "error"` rejects this case; `zero_width = "na"` marks every
+pair involving that box as missing, including its diagonal. It does not
+assign artificial zero or perfect overlap to degenerate boxes.
+
 # Citation
 
 Use `citation("ggInterval")` after installation to retrieve the current
 package citation metadata.
+
+# References
+
+- Arce Garro, J. and Rodriguez Rojas, O. (2019). Optimized dimensionality
+  reduction methods for interval-valued variables and their application to
+  facial recognition. *Entropy*, 21(10), 1016.
+  <https://doi.org/10.3390/e21101016>.
+- Bertrand, P. and Goupil, F. (2000). Descriptive Statistics for Symbolic Data.
+  In H.-H. Bock and E. Diday (eds.), *Analysis of Symbolic Data*, pp. 106--124.
+  Springer.
+- Billard, L. and Diday, E. (2006). *Symbolic Data Analysis: Conceptual
+  Statistics and Data Mining*. Wiley.
+- Billard, L. (2008). Sample covariance functions for complex quantitative
+  data. *Proceedings of the World IASC Conference*, pp. 157--163.
+- Irpino, A. and Verde, R. (2015). Basic Statistics for Distributional
+  Symbolic Variables: A New Metric-based Approach. *Advances in Data Analysis
+  and Classification*, 9, 143--175.
+- Umbleja, K., Ichino, M. and Yaguchi, H. (2020). Improving symbolic data
+  visualization for pattern recognition and knowledge discovery.
+  *Visual Informatics*, 4(1), 23--31.
+  <https://doi.org/10.1016/j.visinf.2019.12.003>.
 
 # Session Information
 

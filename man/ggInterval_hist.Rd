@@ -23,10 +23,10 @@ It is the same as the mapping of ggplot2.}
 intervals. Unequal-bin means the bin widths are determined by the data,
 so the argument \code{bins} is unused in that case.}
 
-\item{bins}{x axis bins,which mean how many partials the variable}
+\item{bins}{Finite numeric positive integer scalar for equal-bin mode.
+Values above 200 warn; values above 1000 error. Ignored in unequal-bin mode.}
 
-\item{plotAll}{boolean, whether plot all variables, default FALSE.
-will be separate into.}
+\item{plotAll}{boolean, whether plot all variables, default FALSE.}
 
 \item{position}{"stack" or "identity"}
 
@@ -36,11 +36,35 @@ will be separate into.}
 An object of class \code{ggInterval_hist_result}. A direct call
 displays the histogram, and the returned object stores the ggplot object in
 \code{$plot} together with the accompanying frequency tables.
+Tables are named \code{Table <var>} or \code{Table  <var>: <group>}.
+Equal-bin tables contain \code{Interval}, \code{Observed.Frequency} and
+\code{Relative.Frequency}; unequal-bin tables contain \code{Interval} and
+\code{Cumulative.Concepts} (the display name is "Cumulative Concepts").
 }
 \description{
 Visualize the continuous variable distribution
 by dividing the x axis into bins,and calculating the frequency
 of observation interval in each bin.
+}
+\details{
+For equal-bin mode, let A be the minimum lower endpoint and B the
+maximum upper endpoint, pooled across all groups. With r bins, breaks are
+A + g (B - A) / r for g = 0, ..., r, generated with exactly r + 1 values.
+A positive-width interval contributes its overlap length divided by its
+width: [1,5] with breaks 0,2,4,6 contributes 1/4, 1/2, 1/4.
+A point contributes one to its left-closed, right-open bin; the final right
+endpoint belongs to the final bin. Constant ranges are padded on both sides
+by max(abs(A) * 0.05, 0.5), including padding 0.5 at zero.
+Allocation uses unrounded breaks; displayed endpoints are rounded to two
+decimals and retain bracket labels, which do not indicate endpoint ownership.
+Endpoints must be finite, non-missing and ordered (lower <= upper).
+In unequal-bin mode, the unchanged 0.01 grid counts intervals covering each
+grid location. A constant variable (all intervals equal to one value v) is
+represented by its coverage count n at the exact value v as a zero-width
+rectangle (vertical spike), without constructing a grid. The equal-bin
+padding rule does not apply there. "Cumulative
+Concepts" are coverage counts, not probabilities, and need not integrate to
+one. This method ignores bins and does not support grouping.
 }
 \examples{
 mydata <- ggInterval::facedata

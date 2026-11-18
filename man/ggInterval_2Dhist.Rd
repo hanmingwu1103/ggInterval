@@ -50,14 +50,32 @@ cell value. Alternatives are \code{"nonzero"} and \code{"all"}.}
 \item{addFreq}{Deprecated alias for \code{cell_labels}.}
 }
 \value{
-Return a list containing a ggplot2 object and the corresponding
-frequency table.
+A list with \code{$plot} and a \code{Table (x, y)} data frame.
+The plot data contain unrounded cell metrics; table cells are rounded to
+three decimals and endpoint labels to two decimals. Frequency and probability
+table margins sum the rounded cells.
 }
 \description{
 Visualize the joint distribution of two continuous
 interval-valued variables by dividing the x axis and y axis into
 rectangles and calculating the frequency of each observation interval
 in every rectangle.
+}
+\details{
+Cell weighted frequency \code{f} is the sum of products of axis
+overlap fractions and sums to n observations per panel. Relative frequency
+is \code{p = f/n}; density is \code{h = p/area}, so sum(h * area) = 1.
+Bins are left-closed and right-open, with the final right endpoint included.
+A point interval contributes unit mass to exactly one bin on each axis.
+Equal-bin breaks are A + g (B - A) / r, g = 0, ..., r, using exact global
+endpoints A and B. A constant axis is padded by max(abs(A) * 0.05, 0.5)
+on each side (0.5 at zero). Endpoints must be finite, non-missing and ordered.
+Unequal-bin breaks use sorted unique endpoints; tau merges chains of gaps
+smaller than tau, retaining outer endpoints and averaging interior groups.
+Constant unequal-bin axes use the same padding. Rounded bracket labels do
+not indicate endpoint ownership; allocations use unrounded breaks.
+In equal-bin mode xBins and yBins must each be finite numeric positive integer
+scalars, and their sum must not exceed 200. Unequal-bin mode ignores them.
 }
 \examples{
 ggInterval_2Dhist(oils, aes(x = GRA, y = FRE),

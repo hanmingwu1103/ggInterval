@@ -32,7 +32,23 @@
 #' mean value within the matrix. Alternatives are \code{"nonzero"} and
 #' \code{"all"}.
 #' @param addFreq Deprecated alias for \code{cell_labels}.
-#' @return Return a ggplot2 object.
+#' @return A ggplot whose \code{$data} holds panel cell data, including
+#' \code{f}, \code{p}, \code{h}, \code{area}, \code{xv}, \code{yv}, and
+#' \code{isPlot}. Rows with \code{isPlot = TRUE} are off-diagonal cells.
+#' @details Cell weighted frequency \code{f} is the sum of products of axis
+#' overlap fractions and sums to n observations per panel. Relative frequency
+#' is \code{p = f/n}; density is \code{h = p/area}, so sum(h * area) = 1.
+#' Bins are left-closed and right-open, with the final right endpoint included.
+#' A point interval contributes unit mass to exactly one bin on each axis.
+#' Equal-bin breaks are A + g (B - A) / r, g = 0, ..., r, using exact global
+#' endpoints A and B. A constant axis is padded by max(abs(A) * 0.05, 0.5)
+#' on each side (0.5 at zero). Endpoints must be finite, non-missing and ordered.
+#' Unequal-bin breaks use sorted unique endpoints; tau merges chains of gaps
+#' smaller than tau, retaining outer endpoints and averaging interior groups.
+#' Constant unequal-bin axes use the same padding. Rounded bracket labels do
+#' not indicate endpoint ownership; allocations use unrounded breaks.
+#' In equal-bin mode xBins and yBins must each be finite numeric positive integer
+#' scalars, and their sum must not exceed 100. Unequal-bin mode ignores them.
 #' @usage ggInterval_2DhistMatrix(data = NULL, mapping = aes(NULL),
 #' method = "equal-bin", xBins = 8, yBins = 8,
 #' display = "p", palette = "Blues", direction = 1, tau = 0,
@@ -77,6 +93,11 @@ ggInterval_2DhistMatrix <- function(data = NULL,
   label_rule <- match.arg(label_rule, c("above-mean", "nonzero", "all"))
   if (!is.null(addFreq)) {
     cell_labels <- addFreq
+  }
+
+  if (method == "equal-bin") {
+    validate_hist_bins(xBins, "xBins")
+    validate_hist_bins(yBins, "yBins")
   }
 
   if (method == "equal-bin" && xBins + yBins > 100) {

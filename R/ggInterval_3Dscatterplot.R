@@ -112,30 +112,42 @@ ggInterval_3Dscatterplot <- function(data = NULL,
       usermapping, mymapping
     )), class = "uneval"))
     
+    # Explicit axis data avoid inheriting polygon mappings. Keep the original
+    # draw count to preserve antialiased axis edges in existing PDF output.
+    axis_data <- data.frame(
+      x1 = rep(m1 - sx, nrow(d)),
+      x2 = rep(m2, nrow(d)),
+      y1 = rep(m1 - sy, nrow(d)),
+      y2 = rep(m2, nrow(d))
+    )
+    
     #plot
     ggplot(d, aes(newx, newy)) +
       geom_point() +
       do.call(geom_polygon, allmapping) +
       geom_segment(aes(
-        x = m1 - sx,
-        xend = m2,
-        y = m1 - sy,
-        yend = m2
+        x = .data$x1,
+        xend = .data$x2,
+        y = .data$y1,
+        yend = .data$y2
       ),
+      data = axis_data, inherit.aes = FALSE,
       arrow = arrow(length = unit(0.3, "cm"))) + #z
       geom_segment(aes(
-        x = m1 - sx,
-        xend = m2,
-        y = m1 - sy,
-        yend = m1 - sy
+        x = .data$x1,
+        xend = .data$x2,
+        y = .data$y1,
+        yend = .data$y1
       ),
+      data = axis_data, inherit.aes = FALSE,
       arrow = arrow(length = unit(0.3, "cm"))) + #x
       geom_segment(aes(
-        x = m1 - sx,
-        xend = m1 - sx,
-        y = m1 - sy,
-        yend = m2
+        x = .data$x1,
+        xend = .data$x1,
+        y = .data$y1,
+        yend = .data$y2
       ),
+      data = axis_data, inherit.aes = FALSE,
       arrow = arrow(length = unit(0.3, "cm"))) + #y
       coord_fixed(ratio = 1) + labs(x = attr1, y = attr2, title = "3D scatter plot") +
       annotate(

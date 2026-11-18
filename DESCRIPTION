@@ -1,8 +1,8 @@
 Package: ggInterval
 Type: Package
 Title: Visualizing Interval-Valued Data Using 'ggplot2'
-Version: 0.2.5
-Date: 2026-04-28
+Version: 0.2.6
+Date: 2026-11-18
 Authors@R: c(
     person("Bo-Syue", "Jiang", email = "lukajiang1998@gmail.com", role = "aut"),
     person("Han-Ming", "Wu", email = "wuhm@g.nccu.edu.tw", role = "cre"))
@@ -15,7 +15,7 @@ Description: Extends 'ggplot2' for visualizing interval-valued data with
     algorithms or user-defined groupings.
 Depends: ggplot2, R (>= 4.4.0), tidyverse, RSDA
 Suggests: testthat (>= 3.0.0), knitr, rmarkdown, data.table,
-    HistDAWass, MAINT.Data, TTR
+    HistDAWass, MAINT.Data, TTR, MASS
 Imports: rlang, R6, dplyr, tidyr, gridExtra, gtools, stringr, prodlim,
         ggforce, ggpubr, ggthemes, tibble, magrittr, vctrs
 License: GPL (>= 2)

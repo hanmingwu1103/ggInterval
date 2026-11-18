@@ -17,14 +17,36 @@
 #' \code{"unequal-bin"}. Equal-bin means the histogram uses equally spaced
 #' intervals. Unequal-bin means the bin widths are determined by the data,
 #' so the argument \code{bins} is unused in that case.
-#' @param bins x axis bins,which mean how many partials the variable
+#' @param bins Finite numeric positive integer scalar for equal-bin mode.
+#' Values above 200 warn; values above 1000 error. Ignored in unequal-bin mode.
 #' @param plotAll boolean, whether plot all variables, default FALSE.
-#' will be separate into.
 #' @param position "stack" or "identity"
 #' @param alpha fill alpha
 #' @return An object of class \code{ggInterval_hist_result}. A direct call
 #' displays the histogram, and the returned object stores the ggplot object in
 #' \code{$plot} together with the accompanying frequency tables.
+#' Tables are named \code{Table <var>} or \code{Table  <var>: <group>}.
+#' Equal-bin tables contain \code{Interval}, \code{Observed.Frequency} and
+#' \code{Relative.Frequency}; unequal-bin tables contain \code{Interval} and
+#' \code{Cumulative.Concepts} (the display name is "Cumulative Concepts").
+#' @details For equal-bin mode, let A be the minimum lower endpoint and B the
+#' maximum upper endpoint, pooled across all groups. With r bins, breaks are
+#' A + g (B - A) / r for g = 0, ..., r, generated with exactly r + 1 values.
+#' A positive-width interval contributes its overlap length divided by its
+#' width: [1,5] with breaks 0,2,4,6 contributes 1/4, 1/2, 1/4.
+#' A point contributes one to its left-closed, right-open bin; the final right
+#' endpoint belongs to the final bin. Constant ranges are padded on both sides
+#' by max(abs(A) * 0.05, 0.5), including padding 0.5 at zero.
+#' Allocation uses unrounded breaks; displayed endpoints are rounded to two
+#' decimals and retain bracket labels, which do not indicate endpoint ownership.
+#' Endpoints must be finite, non-missing and ordered (lower <= upper).
+#' In unequal-bin mode, the unchanged 0.01 grid counts intervals covering each
+#' grid location. A constant variable (all intervals equal to one value v) is
+#' represented by its coverage count n at the exact value v as a zero-width
+#' rectangle (vertical spike), without constructing a grid. The equal-bin
+#' padding rule does not apply there. "Cumulative
+#' Concepts" are coverage counts, not probabilities, and need not integrate to
+#' one. This method ignores bins and does not support grouping.
 #' @usage ggInterval_hist(data = NULL,mapping = aes(NULL),method="equal-bin",bins=10,
 #'  plotAll = FALSE, position = "identity", alpha = 0.5)
 #' @examples
@@ -69,10 +91,13 @@ ggInterval_hist <- function(data = NULL,
   base <- NULL
   
   #test figure clearly
-  if (method == "equal-bin" & bins > 200 & bins <= 1000) {
-    warning("Bins are too large that will lead the figure to be fuzzy.")
-  } else if (method == "equal-bin" & bins > 1000) {
-    stop("Bins are too large that will lead the figure to be fuzzy.")
+  if (method == "equal-bin") {
+    validate_hist_bins(bins, "bins")
+    if (bins > 200 && bins <= 1000) {
+      warning("Bins are too large that will lead the figure to be fuzzy.")
+    } else if (bins > 1000) {
+      stop("Bins are too large that will lead the figure to be fuzzy.")
+    }
   }
   
   # group for hist adjust
@@ -171,13 +196,29 @@ ggInterval_hist <- function(data = NULL,
       }
     }#end plotAll
     
+    for (var in attr) {
+      validate_hist_endpoints(iData[[var]]$min, iData[[var]]$max)
+    }
+
     #unequal-bin cannot grouping
     if (method == "unequal-bin") {
       plotData <- NULL
       intervalDf = NULL
       for (u in 1:nrow(mmd)) {
+        lower <- mmd[u, "minimal"]
+        upper <- mmd[u, "maximal"]
+        if (lower == upper) {
+          v <- lower
+          plotData <- rbind(plotData, data.frame(
+            x1 = v, x2 = v, y1 = 0, y2 = as.numeric(n), group = factor(attr[u])
+          ))
+          intervalDf <- rbind(intervalDf, data.frame(
+            start = round(v, 2), end = round(v, 2)
+          ))
+          next
+        }
         d <- as.data.frame(iData[[attr[u]]])
-        temp <- seq(mmd[u, "minimal"], mmd[u, "maximal"], 0.01)
+        temp <- seq(lower, upper, 0.01)
         f <- matrix(0, nrow = length(temp), ncol = n + 1)
         f[, 1] <- temp
         
@@ -197,8 +238,8 @@ ggInterval_hist <- function(data = NULL,
         
         f <- cbind(temp, apply(f[, -1], 1, FUN = sum))
         
-        x <- f[1, 2]
-        y <- 1
+        x <- 1
+        y <- f[1, 2]
         for (i in 1:(dim(f)[1] - 1)) {
           if (f[i, 2] != f[i + 1, 2]) {
             y <- append(y, f[i + 1, 2])
@@ -300,20 +341,10 @@ ggInterval_hist <- function(data = NULL,
         work.attr <- mmd[i, "this.attr"]
         mmd.temp <- dplyr::filter(mmd, this.attr == work.attr)
         #seperate the attribute into bins
-        dist <- (max(mmd.temp[, "maximal"]) - min(mmd.temp[, "minimal"])) /
-          bins
-        #original:, till 2022 4 12
-        interval <- seq(min(mmd.temp[, "minimal"]), max(mmd.temp[, "maximal"]), dist)
-        
-        # adjust interval: not finish yet
-        # interval<-seq(min(mmd.temp[, "minimal"]) - dist/2,
-        #               max(mmd.temp[, "maximal"]) + dist/2, dist)
-        
-        
-        
-        
-        #test for ch3, p.84, figure3.3
-        #interval <- c(0, 4, 7, 10, 13, 16, 19)
+        interval <- build_hist_equal_breaks(
+          mmd.temp[, "minimal"], mmd.temp[, "maximal"], bins
+        )
+
         #calculate frequency
         f <- NULL
         
@@ -323,17 +354,7 @@ ggInterval_hist <- function(data = NULL,
         for (obs in 1:nrow(iData[select.row, attr[work.attr]])) {
           a <- iData[select.row, attr[work.attr]][[1]][obs]$min
           b <- iData[select.row, attr[work.attr]][[1]][obs]$max
-          for (area in 1:bins) {
-            headIn <- a %>% between(interval[area], interval[area + 1])
-            tailIn <- b %>% between(interval[area], interval[area + 1])
-            contain <- interval[area] %>% between(a, b)
-            if (headIn | tailIn | contain) {
-              temp <- sort(c(a, b, interval[area], interval[area + 1]))
-              f[obs, area] <- (temp[3] - temp[2]) / (b - a)
-            } else{
-              f[obs, area] <- 0
-            }
-          }
+          f[obs, ] <- interval_overlap_ratio(a, b, interval)
         }
         
         nInt <- length(interval)
@@ -567,7 +588,7 @@ ggInterval_hist <- function(data = NULL,
           
         } else{
           base <- ggplot(data = myhist, aes(x = factor(interval), y = frequency)) +
-            do.call(geom_histogram, allmapping) +
+            do.call(geom_bar, allmapping) +
             theme(axis.text.x = element_text(
               angle = 90,
               vjust = 0.5,
@@ -600,6 +621,7 @@ ggInterval_hist <- function(data = NULL,
   })
 }
 
+#' @exportS3Method
 print.ggInterval_hist_result <- function(x, ...) {
   if (!is.null(x$plot) && inherits(x$plot, "ggplot")) {
     print(x$plot)
